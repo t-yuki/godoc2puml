@@ -9,23 +9,8 @@ import (
 	"go/token"
 	"os"
 	"strings"
+	. "github.com/t-yuki/godoc2puml/ast"
 )
-
-type Package struct {
-	QualifiedName string
-	Classes       []Class
-}
-
-type Class struct {
-	Name      string
-	Relations []Relation
-}
-
-type Relation struct {
-	Target       string
-	Label        string
-	Multiplicity string
-}
 
 func ParsePackage(packagePath string) (*Package, error) {
 	p := &Package{}
@@ -47,13 +32,13 @@ func ParsePackage(packagePath string) (*Package, error) {
 	}
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Files {
-			p.parseFile(file)
+			parseFile(p, file)
 		}
 	}
 	return p, nil
 }
 
-func (p *Package) parseFile(f *ast.File) {
+func parseFile(p *Package, f *ast.File) {
 	for _, decl := range f.Decls {
 		gd, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -72,12 +57,13 @@ func (p *Package) parseFile(f *ast.File) {
 			}
 
 			cl := Class{Name: ts.Name.Name, Relations: make([]Relation, 0, 10)}
-			cl.parseFields(st.Fields)
+			parseFields(&cl, st.Fields)
 			p.Classes = append(p.Classes, cl)
 		}
 	}
 }
-func (cl *Class) parseFields(fields *ast.FieldList) {
+
+func parseFields(cl *Class, fields *ast.FieldList) {
 	for _, field := range fields.List {
 		elementType := elementType(field.Type)
 		if isPrimitive(elementType) {
