@@ -3,12 +3,19 @@ package ast
 type Package struct {
 	QualifiedName string
 	Classes       []*Class
+	Interfaces    []*Interface
 }
 
 type Class struct {
 	Name      string
 	Methods   []*Method
 	Fields    []*Field
+	Relations []*Relation
+}
+
+type Interface struct {
+	Name      string
+	Methods   []*Method
 	Relations []*Relation
 }
 
@@ -36,7 +43,6 @@ type Relation struct {
 	RelType      RelationType
 	Label        string
 	Multiplicity string
-	Composition  bool
 }
 
 type RelationType string

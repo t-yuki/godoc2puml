@@ -47,7 +47,6 @@ Known Problems
 --------------
 Many, but...
 
-* go interface type is not declared as interface in PlantUML with `abstract` keyword.
 * enum pattern is not recognized
 * ...
 

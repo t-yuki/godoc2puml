@@ -31,14 +31,18 @@ func (v *methodVisitor) visitFuncDecl(node *ast.FuncDecl) {
 		// unknown method receiver
 		return
 	}
-
 	method := &Method{
 		Name:      node.Name.String(),
 		Arguments: make([]DeclPair, 0, 10),
 		Results:   make([]DeclPair, 0, 10),
 	}
 	method.Public = isPublic(method.Name)
-	for _, field := range node.Type.Params.List {
+	parseFuncType(method, node.Type)
+	class.Methods = append(class.Methods, method)
+}
+
+func parseFuncType(method *Method, node *ast.FuncType) {
+	for _, field := range node.Params.List {
 		argType := elementType(field.Type)
 		if len(field.Names) == 0 {
 			method.Arguments = append(method.Arguments, DeclPair{"", argType})
@@ -47,8 +51,8 @@ func (v *methodVisitor) visitFuncDecl(node *ast.FuncDecl) {
 			method.Arguments = append(method.Arguments, DeclPair{name.String(), argType})
 		}
 	}
-	if node.Type.Results != nil {
-		for _, field := range node.Type.Results.List {
+	if node.Results != nil {
+		for _, field := range node.Results.List {
 			argType := elementType(field.Type)
 			if len(field.Names) == 0 {
 				method.Results = append(method.Results, DeclPair{"", argType})
@@ -58,5 +62,4 @@ func (v *methodVisitor) visitFuncDecl(node *ast.FuncDecl) {
 			}
 		}
 	}
-	class.Methods = append(class.Methods, method)
 }

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"go/ast"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
@@ -21,19 +22,27 @@ func (v *typeVisitor) Visit(node ast.Node) ast.Visitor {
 }
 
 func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
-	st, ok2 := node.Type.(*ast.StructType)
-	if !ok2 {
+	switch typeNode := node.Type.(type) {
+	case *ast.StructType:
+		cl := &Class{
+			Name:      node.Name.Name,
+			Relations: make([]*Relation, 0, 10),
+			Methods:   make([]*Method, 0, 10),
+		}
+		parseFields(cl, typeNode.Fields)
+		v.pkg.Classes = append(v.pkg.Classes, cl)
+		v.name2class[cl.Name] = cl
+	case *ast.InterfaceType:
+		iface := &Interface{
+			Name:      node.Name.Name,
+			Relations: make([]*Relation, 0, 10),
+			Methods:   make([]*Method, 0, 10),
+		}
+		parseMethods(iface, typeNode.Methods)
+		v.pkg.Interfaces = append(v.pkg.Interfaces, iface)
+	default:
 		return
 	}
-
-	cl := &Class{
-		Name:      node.Name.Name,
-		Relations: make([]*Relation, 0, 10),
-		Methods:   make([]*Method, 0, 10),
-	}
-	parseFields(cl, st.Fields)
-	v.pkg.Classes = append(v.pkg.Classes, cl)
-	v.name2class[cl.Name] = cl
 }
 
 func parseFields(cl *Class, fields *ast.FieldList) {
@@ -53,7 +62,7 @@ func parseFields(cl *Class, fields *ast.FieldList) {
 			for _, name := range field.Names {
 				f2 := *f
 				f2.Name = name.String()
-				f.Public = isPublic(f2.Name)
+				f2.Public = isPublic(f2.Name)
 				cl.Fields = append(cl.Fields, &f2)
 			}
 		default:
@@ -69,6 +78,39 @@ func parseFields(cl *Class, fields *ast.FieldList) {
 				rel2.RelType = Association
 				cl.Relations = append(cl.Relations, &rel2)
 			}
+		}
+	}
+}
+
+func parseMethods(iface *Interface, fields *ast.FieldList) {
+	for _, field := range fields.List {
+		switch typeNode := field.Type.(type) {
+		case *ast.FuncType:
+			if len(field.Names) != 1 {
+				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
+			}
+			method := &Method{
+				Name:      field.Names[0].String(),
+				Arguments: make([]DeclPair, 0, 10),
+				Results:   make([]DeclPair, 0, 10),
+			}
+			method.Public = isPublic(method.Name)
+			parseFuncType(method, typeNode)
+			iface.Methods = append(iface.Methods, method)
+		case *ast.Ident:
+			if len(field.Names) != 0 {
+				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
+			}
+			rel := &Relation{Target: typeNode.String(), RelType: Extension}
+			iface.Relations = append(iface.Relations, rel)
+		case *ast.SelectorExpr:
+			if len(field.Names) != 0 {
+				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
+			}
+			rel := &Relation{Target: elementType(typeNode), RelType: Extension}
+			iface.Relations = append(iface.Relations, rel)
+		default:
+			panic(fmt.Errorf("unexpected field type in interface type %#v on %+v", field, iface))
 		}
 	}
 }

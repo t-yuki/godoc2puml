@@ -23,11 +23,23 @@ namespace {{.QualifiedName}} {
 {{ end }}
 	}
 {{ end }}
+{{ range .Interfaces }}
+	interface {{.Name}} {
+{{ range .Methods}}
+		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}}({{ methodArgs .Arguments}}) {{ methodResults .Results}}
+{{ end }}
+	}
+{{ end }}
 
 {{ range $cl := .Classes }} {{ range .Relations}}
 	{{$cl.Name}} {{relType .RelType}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}{{.Target}} {{if .Label}}: {{.Label}}{{end}}
 {{ end }} {{ end }}
+{{ range $iface := .Interfaces }} {{ range .Relations}}
+	{{$iface.Name}} {{relType .RelType}} {{.Target}}
+{{ end }} {{ end }}
 }
+
+hide interface fields
 
 @enduml
 `))
