@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -39,6 +40,13 @@ func ParsePackage(packagePath string) (*Package, error) {
 		ast.Walk(tv, pkg)
 		mv := &methodVisitor{pkg: p, name2class: name2class}
 		ast.Walk(mv, pkg)
+		for _, class := range p.Classes {
+			sort.Sort(fieldSorter(class.Fields))
+			sort.Sort(methodSorter(class.Methods))
+		}
+		for _, iface := range p.Interfaces {
+			sort.Sort(methodSorter(iface.Methods))
+		}
 	}
 	return p, nil
 }
@@ -109,4 +117,42 @@ func isPrimitive(name string) bool {
 func isPublic(name string) bool {
 	first, _ := utf8.DecodeRuneInString(name)
 	return unicode.IsUpper(first)
+}
+
+type fieldSorter []*Field
+
+func (s fieldSorter) Len() int {
+	return len(s)
+}
+
+func (s fieldSorter) Less(i int, j int) bool {
+	if s[i].Public != s[j].Public {
+		return s[i].Public
+	}
+	return s[i].Name < s[j].Name
+}
+
+func (s fieldSorter) Swap(i int, j int) {
+	t := s[i]
+	s[i] = s[j]
+	s[j] = t
+}
+
+type methodSorter []*Method
+
+func (s methodSorter) Len() int {
+	return len(s)
+}
+
+func (s methodSorter) Less(i int, j int) bool {
+	if s[i].Public != s[j].Public {
+		return s[i].Public
+	}
+	return s[i].Name < s[j].Name
+}
+
+func (s methodSorter) Swap(i int, j int) {
+	t := s[i]
+	s[i] = s[j]
+	s[j] = t
 }
