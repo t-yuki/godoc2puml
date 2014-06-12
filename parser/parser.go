@@ -65,23 +65,34 @@ func parseFile(p *Package, f *ast.File) {
 
 func parseFields(cl *Class, fields *ast.FieldList) {
 	for _, field := range fields.List {
-		elementType := elementType(field.Type)
-		if isPrimitive(elementType) {
-			// basic types such as string, int so skip it
-			continue
-		}
-		rel := Relation{Target: elementType}
+		multiplicity := ""
 		if _, ok := field.Type.(*ast.ArrayType); ok {
-			rel.Multiplicity = "0..*"
+			multiplicity = "0..*"
 		}
+		elementType := elementType(field.Type)
+		switch {
+		case isPrimitive(elementType):
+			f := Field{Type: elementType, Multiplicity: multiplicity}
 
-		if len(field.Names) == 0 { // anonymous field
-			cl.Relations = append(cl.Relations, rel)
-		}
-		for _, name := range field.Names {
-			relNamed := rel
-			relNamed.Label = name.String()
-			cl.Relations = append(cl.Relations, rel)
+			if len(field.Names) == 0 { // anonymous field
+				cl.Fields = append(cl.Fields, f)
+			}
+			for _, name := range field.Names {
+				f.Name = name.String()
+				cl.Fields = append(cl.Fields, f)
+			}
+		default:
+			rel := Relation{Target: elementType, Multiplicity: multiplicity}
+
+			if len(field.Names) == 0 { // anonymous field
+				rel.RelType = Composition
+				cl.Relations = append(cl.Relations, rel)
+			}
+			for _, name := range field.Names {
+				rel.Label = name.String()
+				rel.RelType = Association
+				cl.Relations = append(cl.Relations, rel)
+			}
 		}
 	}
 }
@@ -119,11 +130,11 @@ func elementType(expr ast.Node) string {
 	case *ast.ChanType:
 		switch expr.Dir {
 		case ast.SEND:
-			return "chan out" + elementType(expr.Value)
+			return "chan out " + elementType(expr.Value)
 		case ast.RECV:
-			return "chan in" + elementType(expr.Value)
+			return "chan in " + elementType(expr.Value)
 		default:
-			return "chan both" + elementType(expr.Value)
+			return "chan both " + elementType(expr.Value)
 		}
 	default:
 		panic(fmt.Errorf("%#v", expr))
@@ -132,7 +143,12 @@ func elementType(expr ast.Node) string {
 
 func isPrimitive(name string) bool {
 	switch name {
-	case "string", "int", "uint", "uint8":
+	case "bool", "int", "uint", "byte", "float",
+		"uint8", "int8",
+		"uint16", "int16",
+		"uint32", "int32",
+		"uint64", "int64",
+		"string":
 		return true
 	default:
 	}
