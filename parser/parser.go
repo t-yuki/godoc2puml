@@ -97,11 +97,14 @@ func elementType(expr ast.Node) string {
 
 func isPrimitive(name string) bool {
 	switch name {
-	case "bool", "int", "uint", "byte", "float",
+	case "bool", "int", "uint", "byte", "rune", "float",
 		"uint8", "int8",
 		"uint16", "int16",
 		"uint32", "int32",
 		"uint64", "int64",
+		"float32", "float64",
+		"complex64", "complex128",
+		"uintptr",
 		"string":
 		return true
 	default:

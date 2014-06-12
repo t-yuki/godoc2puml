@@ -49,7 +49,7 @@ func parseFields(cl *Class, fields *ast.FieldList) {
 	for _, field := range fields.List {
 		multiplicity := ""
 		if _, ok := field.Type.(*ast.ArrayType); ok {
-			multiplicity = "0..*"
+			multiplicity = "*"
 		}
 		elementType := elementType(field.Type)
 		switch {

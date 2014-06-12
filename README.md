@@ -21,7 +21,7 @@ It also depends on plantuml. Well, it is already attached so you do not need to 
 Usage
 -----
 
-`godoc2puml` generates the diagram for a package. You can also specify output format if you installed the above.
+`godoc2puml` generates a diagram for packages. You can also specify output format if you installed the above.
 
     $ godoc2puml net/http > net.http.puml
     $ java -jar plantuml.jar -pipe -tpng < net.http.puml > net.http.png
