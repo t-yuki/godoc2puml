@@ -2,13 +2,33 @@ package ast
 
 type Package struct {
 	QualifiedName string
-	Classes       []Class
+	Classes       []*Class
 }
 
 type Class struct {
 	Name      string
-	Relations []Relation
-	Fields    []Field
+	Methods   []*Method
+	Fields    []*Field
+	Relations []*Relation
+}
+
+type Method struct {
+	Name      string
+	Arguments []DeclPair
+	Results   []DeclPair
+	Public    bool
+}
+
+type DeclPair struct {
+	Name string
+	Type string
+}
+
+type Field struct {
+	Name         string
+	Type         string
+	Multiplicity string
+	Public       bool
 }
 
 type Relation struct {
@@ -27,9 +47,3 @@ const (
 	Composition RelationType = "composition"
 	Agregation  RelationType = "agregation"
 )
-
-type Field struct {
-	Name         string
-	Type         string
-	Multiplicity string
-}

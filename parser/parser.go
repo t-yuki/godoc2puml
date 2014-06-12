@@ -9,13 +9,15 @@ import (
 	"go/token"
 	"os"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
 func ParsePackage(packagePath string) (*Package, error) {
 	p := &Package{}
-	p.QualifiedName = packagePath
-	p.Classes = make([]Class, 0, 10)
+	p.QualifiedName = strings.Replace(packagePath, "/", ".", -1)
+	p.Classes = make([]*Class, 0, 10)
 
 	buildPkg, err := build.Import(packagePath, ".", build.FindOnly)
 	if err != nil {
@@ -30,71 +32,15 @@ func ParsePackage(packagePath string) (*Package, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, pkg := range pkgs {
-		for _, file := range pkg.Files {
-			parseFile(p, file)
-		}
+		name2class := make(map[string]*Class)
+		tv := &typeVisitor{pkg: p, name2class: name2class}
+		ast.Walk(tv, pkg)
+		mv := &methodVisitor{pkg: p, name2class: name2class}
+		ast.Walk(mv, pkg)
 	}
 	return p, nil
-}
-
-func parseFile(p *Package, f *ast.File) {
-	for _, decl := range f.Decls {
-		gd, ok := decl.(*ast.GenDecl)
-		if !ok {
-			continue
-		}
-
-		for _, spec := range gd.Specs {
-			ts, ok1 := spec.(*ast.TypeSpec)
-			if !ok1 {
-				continue
-			}
-
-			st, ok2 := ts.Type.(*ast.StructType)
-			if !ok2 {
-				continue
-			}
-
-			cl := Class{Name: ts.Name.Name, Relations: make([]Relation, 0, 10)}
-			parseFields(&cl, st.Fields)
-			p.Classes = append(p.Classes, cl)
-		}
-	}
-}
-
-func parseFields(cl *Class, fields *ast.FieldList) {
-	for _, field := range fields.List {
-		multiplicity := ""
-		if _, ok := field.Type.(*ast.ArrayType); ok {
-			multiplicity = "0..*"
-		}
-		elementType := elementType(field.Type)
-		switch {
-		case isPrimitive(elementType):
-			f := Field{Type: elementType, Multiplicity: multiplicity}
-
-			if len(field.Names) == 0 { // anonymous field
-				cl.Fields = append(cl.Fields, f)
-			}
-			for _, name := range field.Names {
-				f.Name = name.String()
-				cl.Fields = append(cl.Fields, f)
-			}
-		default:
-			rel := Relation{Target: elementType, Multiplicity: multiplicity}
-
-			if len(field.Names) == 0 { // anonymous field
-				rel.RelType = Composition
-				cl.Relations = append(cl.Relations, rel)
-			}
-			for _, name := range field.Names {
-				rel.Label = name.String()
-				rel.RelType = Association
-				cl.Relations = append(cl.Relations, rel)
-			}
-		}
-	}
 }
 
 func elementType(expr ast.Node) string {
@@ -130,11 +76,11 @@ func elementType(expr ast.Node) string {
 	case *ast.ChanType:
 		switch expr.Dir {
 		case ast.SEND:
-			return "chan out " + elementType(expr.Value)
+			return "chan<- " + elementType(expr.Value)
 		case ast.RECV:
-			return "chan in " + elementType(expr.Value)
+			return "<-chan " + elementType(expr.Value)
 		default:
-			return "chan both " + elementType(expr.Value)
+			return "chan " + elementType(expr.Value)
 		}
 	default:
 		panic(fmt.Errorf("%#v", expr))
@@ -158,4 +104,9 @@ func isPrimitive(name string) bool {
 	default:
 		return false
 	}
+}
+
+func isPublic(name string) bool {
+	first, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(first)
 }

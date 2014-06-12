@@ -24,6 +24,8 @@ Usage
 `godoc2puml` generates the diagram for a package. You can also specify output format if you installed the above.
 
     $ godoc2puml net/http > net.http.puml
+    $ java -jar plantuml.jar -pipe -tpng < net.http.puml > net.http.png
+
     $ # NOT IMPLEMENTED YET # godoc2puml -t=png net/http > net.http.png
 
 Other options:
@@ -34,6 +36,18 @@ Usage of godoc2puml:
         puml:  write PlantUML format.
   -h=false: show this help
 ```
+
+Known Problems
+--------------
+Many, but...
+
+* go interface type is not declared as interface in PlantUML with `abstract` keyword.
+* enum pattern is not recognized
+* ...
+
+References
+----------
+* [Plant UML](http://plantuml.sourceforge.net/)
 
 Authors
 -------
