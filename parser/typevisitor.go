@@ -57,7 +57,7 @@ func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 		elementType := elementType(field.Type)
 		switch {
 		case isPrimitive(elementType):
-			f := &Field{Type: elementType, Multiplicity: multiplicity}
+			f := &Field{Type: typeGoString(field.Type), Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
 				cl.Fields = append(cl.Fields, f)

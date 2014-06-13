@@ -52,6 +52,64 @@ func ParsePackage(packagePath string) (*Package, error) {
 	return p, nil
 }
 
+func typeGoString(expr ast.Node) string {
+	if expr == nil {
+		return ""
+	}
+	// TODO: refactor using go/printer
+	switch expr := expr.(type) {
+	case *ast.Ident:
+		return expr.String()
+	case *ast.ArrayType:
+		return "[]" + typeGoString(expr.Elt)
+	case *ast.StarExpr:
+		return typeGoString(expr.X)
+	case *ast.SelectorExpr:
+		return typeGoString(expr.X) + "." + expr.Sel.String()
+	case *ast.FuncType:
+		pre := "func(" + typeGoString(expr.Params) + ")"
+		if expr.Results == nil || expr.Results.List == nil {
+			return pre
+		}
+		post := typeGoString(expr.Results)
+		if len(expr.Results.List) == 1 {
+			return pre + " " + post
+		}
+		return pre + " (" + post + ")"
+	case *ast.FieldList:
+		if expr == nil {
+			return ""
+		}
+		var buf bytes.Buffer
+		for i, field := range expr.List {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(typeGoString(field.Type))
+		}
+		return buf.String()
+	case *ast.MapType:
+		return "map[" + typeGoString(expr.Key) + "]" + typeGoString(expr.Value)
+	case *ast.InterfaceType:
+		return "interface {" + typeGoString(expr.Methods) + "}"
+	case *ast.StructType:
+		return "struct {" + typeGoString(expr.Fields) + "}"
+	case *ast.ChanType:
+		switch expr.Dir {
+		case ast.SEND:
+			return "chan<- " + typeGoString(expr.Value)
+		case ast.RECV:
+			return "<-chan " + typeGoString(expr.Value)
+		default:
+			return "chan " + typeGoString(expr.Value)
+		}
+	case *ast.Ellipsis:
+		return "..." + typeGoString(expr.Elt)
+	default:
+		panic(fmt.Errorf("%#v", expr))
+	}
+}
+
 func elementType(expr ast.Node) string {
 	if expr == nil {
 		return ""
@@ -66,7 +124,7 @@ func elementType(expr ast.Node) string {
 	case *ast.SelectorExpr:
 		return elementType(expr.X) + "." + expr.Sel.String()
 	case *ast.FuncType:
-		return "func " + elementType(expr.Params) + elementType(expr.Results)
+		return strings.TrimSpace("func(" + elementType(expr.Params) + ") " + elementType(expr.Results))
 	case *ast.FieldList:
 		if expr == nil {
 			return ""
@@ -113,7 +171,7 @@ func isPrimitive(name string) bool {
 	default:
 	}
 	switch {
-	case strings.ContainsAny(name, " ["):
+	case strings.ContainsAny(name, " [("):
 		return true
 	default:
 		return false

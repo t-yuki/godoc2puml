@@ -43,7 +43,7 @@ func (v *methodVisitor) visitFuncDecl(node *ast.FuncDecl) {
 
 func parseFuncType(method *Method, node *ast.FuncType) {
 	for _, field := range node.Params.List {
-		argType := elementType(field.Type)
+		argType := typeGoString(field.Type)
 		if len(field.Names) == 0 {
 			method.Arguments = append(method.Arguments, DeclPair{"", argType})
 		}
@@ -53,7 +53,7 @@ func parseFuncType(method *Method, node *ast.FuncType) {
 	}
 	if node.Results != nil {
 		for _, field := range node.Results.List {
-			argType := elementType(field.Type)
+			argType := typeGoString(field.Type)
 			if len(field.Names) == 0 {
 				method.Results = append(method.Results, DeclPair{"", argType})
 			}
