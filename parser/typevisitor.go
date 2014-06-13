@@ -32,7 +32,7 @@ func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
 			Methods:   make([]*Method, 0, 10),
 			Pos:       toSourcePos(v.fileSet, node),
 		}
-		parseFields(cl, typeNode.Fields)
+		v.parseFields(cl, typeNode.Fields)
 		v.pkg.Classes = append(v.pkg.Classes, cl)
 		v.name2class[cl.Name] = cl
 	case *ast.InterfaceType:
@@ -41,14 +41,14 @@ func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
 			Relations: make([]*Relation, 0, 10),
 			Methods:   make([]*Method, 0, 10),
 		}
-		parseMethods(iface, typeNode.Methods)
+		v.parseMethods(iface, typeNode.Methods)
 		v.pkg.Interfaces = append(v.pkg.Interfaces, iface)
 	default:
 		return
 	}
 }
 
-func parseFields(cl *Class, fields *ast.FieldList) {
+func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 	for _, field := range fields.List {
 		multiplicity := ""
 		if _, ok := field.Type.(*ast.ArrayType); ok {
@@ -69,6 +69,9 @@ func parseFields(cl *Class, fields *ast.FieldList) {
 				cl.Fields = append(cl.Fields, &f2)
 			}
 		default:
+			if elementType == "error" {
+				elementType = ".error"
+			}
 			rel := &Relation{Target: elementType, Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
@@ -85,7 +88,7 @@ func parseFields(cl *Class, fields *ast.FieldList) {
 	}
 }
 
-func parseMethods(iface *Interface, fields *ast.FieldList) {
+func (v *typeVisitor) parseMethods(iface *Interface, fields *ast.FieldList) {
 	for _, field := range fields.List {
 		switch typeNode := field.Type.(type) {
 		case *ast.FuncType:
@@ -104,13 +107,19 @@ func parseMethods(iface *Interface, fields *ast.FieldList) {
 			if len(field.Names) != 0 {
 				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
 			}
-			rel := &Relation{Target: typeNode.String(), RelType: Extension}
+			elementType := typeNode.String()
+			if elementType == "error" {
+				elementType = ".error"
+			}
+			rel := &Relation{Target: elementType, RelType: Extension}
 			iface.Relations = append(iface.Relations, rel)
 		case *ast.SelectorExpr:
 			if len(field.Names) != 0 {
 				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
 			}
-			rel := &Relation{Target: elementType(typeNode), RelType: Extension}
+			elementType := elementType(typeNode)
+			compensateInterface(v.pkg, elementType)
+			rel := &Relation{Target: elementType, RelType: Extension}
 			iface.Relations = append(iface.Relations, rel)
 		default:
 			panic(fmt.Errorf("unexpected field type in interface type %#v on %+v", field, iface))
@@ -123,4 +132,18 @@ func toSourcePos(fset *token.FileSet, node ast.Node) SourcePos {
 	start := file.Offset(node.Pos())
 	end := file.Offset(node.End())
 	return SourcePos(fmt.Sprintf("%s:#%d,#%d", file.Name(), start, end))
+}
+
+func compensateInterface(pkg *Package, name string) {
+	for _, iface := range pkg.Interfaces {
+		if iface.Name == name {
+			return
+		}
+	}
+	iface := &Interface{
+		Name:      name,
+		Relations: make([]*Relation, 0),
+		Methods:   make([]*Method, 0),
+	}
+	pkg.Interfaces = append(pkg.Interfaces, iface)
 }

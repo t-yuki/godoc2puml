@@ -8,6 +8,7 @@ import (
 
 	"code.google.com/p/go.tools/go/loader"
 	"code.google.com/p/go.tools/oracle"
+	"code.google.com/p/go.tools/oracle/serial"
 	"github.com/t-yuki/godoc2puml/ast"
 )
 
@@ -37,16 +38,10 @@ func Annotate(pkg *ast.Package) error {
 		}
 		impls := res.Serial().Implements
 		for _, target := range impls.AssignableFromPtr {
-			name := strings.Replace(target.Name, "/", ".", -1)
-			rel := &ast.Relation{Target: name, RelType: ast.Implementation}
-			class.Relations = append(class.Relations, rel)
-			compensateInterface(pkg, name)
+			addImplements(pkg, class, target)
 		}
 		for _, target := range impls.AssignableFrom {
-			name := strings.Replace(target.Name, "/", ".", -1)
-			rel := &ast.Relation{Target: name, RelType: ast.Implementation}
-			class.Relations = append(class.Relations, rel)
-			compensateInterface(pkg, name)
+			addImplements(pkg, class, target)
 		}
 	}
 	return nil
@@ -64,4 +59,16 @@ func compensateInterface(pkg *ast.Package, name string) {
 		Methods:   make([]*ast.Method, 0),
 	}
 	pkg.Interfaces = append(pkg.Interfaces, iface)
+}
+
+func addImplements(pkg *ast.Package, class *ast.Class, impl serial.ImplementsType) {
+	name := strings.Replace(impl.Name, "/", ".", -1)
+	if name == "error" {
+		name = ".error"
+	} else {
+		compensateInterface(pkg, name)
+	}
+
+	rel := &ast.Relation{Target: name, RelType: ast.Implementation}
+	class.Relations = append(class.Relations, rel)
 }

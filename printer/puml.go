@@ -12,6 +12,10 @@ import (
 var pumlTemplate = template.Must(template.New("plantuml").Funcs(pumlFuncs).Parse(`
 @startuml
 
+interface error {
+	Error() string
+}
+
 namespace {{.QualifiedName}} {
 {{ range .Classes }}
 	class {{.Name}} {
