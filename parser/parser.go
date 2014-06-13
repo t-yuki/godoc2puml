@@ -17,6 +17,7 @@ import (
 
 func ParsePackage(packagePath string) (*Package, error) {
 	p := &Package{}
+	p.Path = packagePath
 	p.QualifiedName = strings.Replace(packagePath, "/", ".", -1)
 	p.Classes = make([]*Class, 0, 10)
 
@@ -36,9 +37,9 @@ func ParsePackage(packagePath string) (*Package, error) {
 
 	for _, pkg := range pkgs {
 		name2class := make(map[string]*Class)
-		tv := &typeVisitor{pkg: p, name2class: name2class}
-		ast.Walk(tv, pkg)
+		tv := &typeVisitor{pkg: p, name2class: name2class, fileSet: fset}
 		mv := &methodVisitor{pkg: p, name2class: name2class}
+		ast.Walk(tv, pkg)
 		ast.Walk(mv, pkg)
 		for _, class := range p.Classes {
 			sort.Sort(fieldSorter(class.Fields))

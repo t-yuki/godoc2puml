@@ -3,10 +3,12 @@ package parser
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
 type typeVisitor struct {
+	fileSet    *token.FileSet
 	pkg        *Package
 	name2class map[string]*Class
 }
@@ -28,6 +30,7 @@ func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
 			Name:      node.Name.Name,
 			Relations: make([]*Relation, 0, 10),
 			Methods:   make([]*Method, 0, 10),
+			Pos:       toSourcePos(v.fileSet, node),
 		}
 		parseFields(cl, typeNode.Fields)
 		v.pkg.Classes = append(v.pkg.Classes, cl)
@@ -113,4 +116,11 @@ func parseMethods(iface *Interface, fields *ast.FieldList) {
 			panic(fmt.Errorf("unexpected field type in interface type %#v on %+v", field, iface))
 		}
 	}
+}
+
+func toSourcePos(fset *token.FileSet, node ast.Node) SourcePos {
+	file := fset.File(node.Pos())
+	start := file.Offset(node.Pos())
+	end := file.Offset(node.End())
+	return SourcePos(fmt.Sprintf("%s:#%d,#%d", file.Name(), start, end))
 }

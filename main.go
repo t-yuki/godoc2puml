@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/t-yuki/godoc2puml/annotator"
 	"github.com/t-yuki/godoc2puml/parser"
 	"github.com/t-yuki/godoc2puml/printer"
 )
@@ -45,6 +46,12 @@ func main() {
 	pkg, err := parser.ParsePackage(packages[0])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "package parse error:%#v", err)
+		return
+	}
+	err = annotator.Annotate(pkg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
+		return
 	}
 	printer.FprintPlantUML(os.Stdout, pkg)
 }

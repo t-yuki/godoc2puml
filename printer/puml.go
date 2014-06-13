@@ -67,6 +67,8 @@ func pumlRelType(relType ast.RelationType) string {
 		return "*--"
 	case ast.Agregation:
 		return "o--"
+	case ast.Implementation:
+		return "..|>" // lolipop style?: "-()"
 	}
 	panic(relType)
 }

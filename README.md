@@ -48,6 +48,9 @@ Known Problems
 Many, but...
 
 * enum pattern is not recognized
+* noisy
+* elementType of map is not recognized as an association
+* outer package type is always recognized as classes, except implemented interfaces
 * ...
 
 References

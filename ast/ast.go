@@ -1,6 +1,7 @@
 package ast
 
 type Package struct {
+	Path          string
 	QualifiedName string
 	Classes       []*Class
 	Interfaces    []*Interface
@@ -11,6 +12,7 @@ type Class struct {
 	Methods   []*Method
 	Fields    []*Field
 	Relations []*Relation
+	Pos       SourcePos
 }
 
 type Interface struct {
@@ -24,11 +26,6 @@ type Method struct {
 	Arguments []DeclPair
 	Results   []DeclPair
 	Public    bool
-}
-
-type DeclPair struct {
-	Name string
-	Type string
 }
 
 type Field struct {
@@ -48,8 +45,18 @@ type Relation struct {
 type RelationType string
 
 const (
-	Association RelationType = "association"
-	Extension   RelationType = "extension"
-	Composition RelationType = "composition"
-	Agregation  RelationType = "agregation"
+	Association    RelationType = "association"
+	Extension      RelationType = "extension"
+	Composition    RelationType = "composition"
+	Agregation     RelationType = "agregation"
+	Implementation RelationType = "implementation"
 )
+
+type DeclPair struct {
+	Name string
+	Type string
+}
+
+// SourcePos is source file position as `file:#start,#end` form.
+// For more details, see http://golang.org/s/oracle-user-manual
+type SourcePos string
