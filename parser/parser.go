@@ -91,6 +91,8 @@ func elementType(expr ast.Node) string {
 		default:
 			return "chan " + elementType(expr.Value)
 		}
+	case *ast.Ellipsis:
+		return "..." + elementType(expr.Elt)
 	default:
 		panic(fmt.Errorf("%#v", expr))
 	}

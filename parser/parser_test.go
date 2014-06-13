@@ -25,21 +25,13 @@ func TestParsePackageIO(t *testing.T) {
 
 }
 
-func TestParsePackageNet(t *testing.T) {
-	pkg, err := parser.ParsePackage("net")
-	if err != nil {
-		t.Fatal(err)
+func TestParsePackageStdLibs(t *testing.T) {
+	for _, name := range []string{"go/ast", "go/token", "reflect", "database/sql", "image", "image/color", "os", "net", "net/http"} {
+		pkg, err := parser.ParsePackage(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := json.MarshalIndent(pkg, "", "\t")
+		t.Logf("%s", b)
 	}
-	b, _ := json.MarshalIndent(pkg, "", "\t")
-	t.Logf("%s", b)
-
-}
-
-func TestParsePackageNetHttp(t *testing.T) {
-	pkg, err := parser.ParsePackage("net/http")
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, _ := json.MarshalIndent(pkg, "", "\t")
-	t.Logf("%s", b)
 }
