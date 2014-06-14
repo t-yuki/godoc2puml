@@ -50,7 +50,10 @@ Many, but...
 * enum pattern is not recognized
 * noisy
 * elementType of map is not recognized as an association
-* outer package type is always recognized as classes, except implemented interfaces
+* outer package type is always recognized as a class except what is extended by other interfaces
+* relations of embed struct are not recognized properly
+* import name and namespace handling is bad
+* interface extensions is recognized only when explicit extensions, not implicit extension
 * ...
 
 References

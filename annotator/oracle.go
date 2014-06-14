@@ -12,7 +12,7 @@ import (
 	"github.com/t-yuki/godoc2puml/ast"
 )
 
-func Annotate(pkg *ast.Package) error {
+func Oracle(pkg *ast.Package) error {
 	settings := build.Default
 	settings.BuildTags = []string{} // TODO
 	conf := loader.Config{Build: &settings, SourceImports: true}
@@ -47,6 +47,33 @@ func Annotate(pkg *ast.Package) error {
 	return nil
 }
 
+func addImplements(pkg *ast.Package, class *ast.Class, impl serial.ImplementsType) {
+	name := qualifiedName(pkg.Path, impl.Name)
+	switch impl.Name {
+	case "runtime.stringer":
+		return // ignore runtime.stringer because fmt.Stringer is more generic
+	case "error":
+		name = ".error" // error is buildin - global scope
+	default:
+		compensateInterface(pkg, name)
+	}
+
+	rel := &ast.Relation{Target: name, RelType: ast.Implementation}
+	class.Relations = append(class.Relations, rel)
+}
+
+func qualifiedName(basepath string, name string) string {
+	for i := len(name) - 1; i >= 0 && name[i] != '/'; i-- {
+		if name[i] == '.' {
+			if name[:i] == basepath {
+				name = name[i+1:]
+			}
+			break
+		}
+	}
+	return strings.Replace(name, "/", ".", -1)
+}
+
 func compensateInterface(pkg *ast.Package, name string) {
 	for _, iface := range pkg.Interfaces {
 		if iface.Name == name {
@@ -58,17 +85,6 @@ func compensateInterface(pkg *ast.Package, name string) {
 		Relations: make([]*ast.Relation, 0),
 		Methods:   make([]*ast.Method, 0),
 	}
+	// TODO: append iface to proper package, not current `pkg`
 	pkg.Interfaces = append(pkg.Interfaces, iface)
-}
-
-func addImplements(pkg *ast.Package, class *ast.Class, impl serial.ImplementsType) {
-	name := strings.Replace(impl.Name, "/", ".", -1)
-	if name == "error" {
-		name = ".error"
-	} else {
-		compensateInterface(pkg, name)
-	}
-
-	rel := &ast.Relation{Target: name, RelType: ast.Implementation}
-	class.Relations = append(class.Relations, rel)
 }

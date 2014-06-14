@@ -48,7 +48,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "package parse error:%#v", err)
 		return
 	}
-	err = annotator.Annotate(pkg)
+	err = annotator.Oracle(pkg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
+		return
+	}
+	err = annotator.Cut(pkg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
 		return
