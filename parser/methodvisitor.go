@@ -1,17 +1,26 @@
 package parser
 
 import (
+	"fmt"
 	"go/ast"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
 type methodVisitor struct {
+	astPackage *ast.Package
+	astFile    *ast.File
 	pkg        *Package
 	name2class map[string]*Class
 }
 
 func (v *methodVisitor) Visit(node ast.Node) ast.Visitor {
 	switch node := node.(type) {
+	case *ast.Package:
+		v.astPackage = node
+		return v
+	case *ast.File:
+		v.astFile = node
+		return v
 	case *ast.FuncDecl:
 		v.visitFuncDecl(node)
 	default:
@@ -36,9 +45,25 @@ func (v *methodVisitor) visitFuncDecl(node *ast.FuncDecl) {
 		Arguments: make([]DeclPair, 0, 10),
 		Results:   make([]DeclPair, 0, 10),
 	}
-	method.Public = isPublic(method.Name)
+	method.Public = ast.IsExported(method.Name)
 	parseFuncType(method, node.Type)
 	class.Methods = append(class.Methods, method)
+}
+
+func elementType(expr ast.Expr) string {
+	if expr == nil {
+		return ""
+	}
+	switch expr := expr.(type) {
+	case *ast.Ident:
+		return expr.String()
+	case *ast.ArrayType:
+		return elementType(expr.Elt)
+	case *ast.StarExpr:
+		return elementType(expr.X)
+	default:
+		panic(fmt.Errorf("%#v", expr))
+	}
 }
 
 func parseFuncType(method *Method, node *ast.FuncType) {

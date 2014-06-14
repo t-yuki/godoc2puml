@@ -2,47 +2,61 @@ package annotator
 
 import "github.com/t-yuki/godoc2puml/ast"
 
-func Cut(pkg *ast.Package) error {
-	backproj := buildBackProjections(pkg)
-	for _, class := range pkg.Classes {
-		newrels := make([]*ast.Relation, 0, len(class.Relations))
-		for _, rel := range class.Relations {
-			if rel.RelType == ast.Implementation &&
-				!isLongestPath(backproj, class.Relations, rel) {
-				continue
+func Cut(scope *ast.Scope) error {
+	backproj := buildBackProjections(scope)
+	for _, pkg := range scope.Packages {
+		for _, class := range pkg.Classes {
+			newrels := make([]*ast.Relation, 0, len(class.Relations))
+			for _, rel := range class.Relations {
+				if rel.RelType == ast.Implementation &&
+					!isLongestPath(backproj, class.Relations, rel) {
+					continue
+				}
+				newrels = append(newrels, rel)
 			}
-			newrels = append(newrels, rel)
+			class.Relations = newrels
 		}
-		class.Relations = newrels
 	}
 	return nil
 }
 
-func buildBackProjections(scope *ast.Package) (backproj map[string][]string) {
+func buildBackProjections(scope *ast.Scope) (backproj map[string][]string) {
 	backproj = map[string][]string{}
-	for _, iface := range scope.Interfaces {
-		for _, rel := range iface.Relations {
-			if rel.RelType != ast.Extension {
-				continue
+	for _, pkg := range scope.Packages {
+		for _, iface := range pkg.Interfaces {
+			name := iface.Name
+			if pkg.Name != "" {
+				name = pkg.Name + "." + name
 			}
-			if backproj[rel.Target] == nil {
-				backproj[rel.Target] = []string{}
+			for _, rel := range iface.Relations {
+				if rel.RelType != ast.Extension {
+					continue
+				}
+				addPath(backproj, rel, name)
 			}
-			backproj[rel.Target] = append(backproj[rel.Target], iface.Name)
 		}
-	}
-	for _, class := range scope.Classes {
-		for _, rel := range class.Relations {
-			if rel.RelType != ast.Composition && rel.RelType != ast.Implementation {
-				continue
+		for _, class := range pkg.Classes {
+			name := class.Name
+			if pkg.Name != "" {
+				name = pkg.Name + "." + name
 			}
-			if backproj[rel.Target] == nil {
-				backproj[rel.Target] = []string{}
+			for _, rel := range class.Relations {
+				if rel.RelType != ast.Composition && rel.RelType != ast.Implementation {
+					continue
+				}
+				addPath(backproj, rel, name)
 			}
-			backproj[rel.Target] = append(backproj[rel.Target], class.Name)
 		}
 	}
 	return
+}
+
+func addPath(backproj map[string][]string, to *ast.Relation, from string) {
+	target := to.Target
+	if backproj[target] == nil {
+		backproj[target] = []string{}
+	}
+	backproj[target] = append(backproj[target], from)
 }
 
 func isLongestPath(backproj map[string][]string, rootRels []*ast.Relation, goal *ast.Relation) bool {
@@ -51,7 +65,8 @@ func isLongestPath(backproj map[string][]string, rootRels []*ast.Relation, goal 
 		if rel == goal || (rel.RelType != ast.Implementation && rel.RelType != ast.Composition) {
 			continue
 		}
-		roots[rel.Target] = rel
+		target := rel.Target
+		roots[target] = rel
 	}
 	return !findRouteToGoalRecursive(backproj, roots, goal.Target)
 }

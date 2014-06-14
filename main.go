@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/t-yuki/godoc2puml/annotator"
+	"github.com/t-yuki/godoc2puml/ast"
 	"github.com/t-yuki/godoc2puml/parser"
 	"github.com/t-yuki/godoc2puml/printer"
 )
@@ -43,20 +44,32 @@ func main() {
 	if len(packages) != 1 {
 		panic("godoc2uml with multiple packages is not implemented yet")
 	}
+
+	scope := ast.NewScope()
+
 	pkg, err := parser.ParsePackage(packages[0])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "package parse error:%#v", err)
 		return
 	}
+
 	err = annotator.Oracle(pkg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
 		return
 	}
-	err = annotator.Cut(pkg)
+	scope.Packages[pkg.Name] = pkg
+
+	err = annotator.Complete(scope)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
 		return
 	}
-	printer.FprintPlantUML(os.Stdout, pkg)
+
+	err = annotator.Cut(scope)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
+		return
+	}
+	printer.FprintPlantUML(os.Stdout, scope)
 }

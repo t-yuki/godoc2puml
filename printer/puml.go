@@ -12,13 +12,11 @@ import (
 var pumlTemplate = template.Must(template.New("plantuml").Funcs(pumlFuncs).Parse(`
 @startuml
 
-interface error {
-	Error() string
-}
+set namespaceSeparator /
 
-namespace {{.QualifiedName}} {
+{{ range $p := .Packages }}
 {{ range .Classes }}
-	class {{.Name}} {
+	class {{ joinName $p.Name .Name }} {
 {{ range .Fields}}
 		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}} {{.Type}}
 {{ end }}
@@ -28,7 +26,7 @@ namespace {{.QualifiedName}} {
 	}
 {{ end }}
 {{ range .Interfaces }}
-	interface {{.Name}} {
+	interface {{ joinName $p.Name .Name }} {
 {{ range .Methods}}
 		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}}({{ methodArgs .Arguments}}) {{ methodResults .Results}}
 {{ end }}
@@ -36,12 +34,12 @@ namespace {{.QualifiedName}} {
 {{ end }}
 
 {{ range $cl := .Classes }} {{ range .Relations}}
-	{{$cl.Name}} {{relType .RelType}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}{{.Target}} {{if .Label}}: {{.Label}}{{end}}
+	"{{ joinName $p.Name $cl.Name }}" {{relType .RelType}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}"{{qualifiedName .Target}}" {{if .Label}}: {{.Label}}{{end}}
 {{ end }} {{ end }}
 {{ range $iface := .Interfaces }} {{ range .Relations}}
-	{{$iface.Name}} {{relType .RelType}} {{.Target}}
+	"{{ joinName $p.Name $iface.Name }}" {{relType .RelType}} "{{qualifiedName .Target}}"
 {{ end }} {{ end }}
-}
+{{ end }}
 
 hide interface fields
 
@@ -52,10 +50,12 @@ var pumlFuncs = map[string]interface{}{
 	"relType":       pumlRelType,
 	"methodArgs":    pumlMethodArgs,
 	"methodResults": pumlMethodResults,
+	"qualifiedName": pumlQualifiedName,
+	"joinName":      pumlJoinName,
 }
 
-func FprintPlantUML(w io.Writer, pkg *ast.Package) {
-	err := pumlTemplate.Execute(w, pkg)
+func FprintPlantUML(w io.Writer, scope *ast.Scope) {
+	err := pumlTemplate.Execute(w, scope)
 	if err != nil {
 		panic(err)
 	}
@@ -97,4 +97,23 @@ func pumlMethodResults(decls []ast.DeclPair) string {
 		return "(" + pumlMethodArgs(decls) + ")"
 	}
 	return pumlMethodArgs(decls)
+}
+
+func pumlQualifiedName(name string) string {
+	for i := len(name) - 1; i >= 0 && name[i] != '/'; i-- {
+		if name[i] == '.' {
+			return name[:i] + "/" + name[i+1:]
+		}
+	}
+	return name
+}
+
+func pumlJoinName(name1 string, name2 string) string {
+	if name1 == "" {
+		return name2
+	}
+	if name2 == "" {
+		return name1
+	}
+	return name1 + "/" + name2
 }

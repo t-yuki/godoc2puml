@@ -10,16 +10,11 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
 func ParsePackage(packagePath string) (*Package, error) {
-	p := &Package{}
-	p.Path = packagePath
-	p.QualifiedName = strings.Replace(packagePath, "/", ".", -1)
-	p.Classes = make([]*Class, 0, 10)
+	p := NewPackage(packagePath)
 
 	buildPkg, err := build.Import(packagePath, ".", build.FindOnly)
 	if err != nil {
@@ -110,52 +105,6 @@ func typeGoString(expr ast.Node) string {
 	}
 }
 
-func elementType(expr ast.Node) string {
-	if expr == nil {
-		return ""
-	}
-	switch expr := expr.(type) {
-	case *ast.Ident:
-		return expr.String()
-	case *ast.ArrayType:
-		return elementType(expr.Elt)
-	case *ast.StarExpr:
-		return elementType(expr.X)
-	case *ast.SelectorExpr:
-		return elementType(expr.X) + "." + expr.Sel.String()
-	case *ast.FuncType:
-		return strings.TrimSpace("func(" + elementType(expr.Params) + ") " + elementType(expr.Results))
-	case *ast.FieldList:
-		if expr == nil {
-			return ""
-		}
-		var buf bytes.Buffer
-		for _, field := range expr.List {
-			buf.WriteString(elementType(field.Type))
-		}
-		return buf.String()
-	case *ast.MapType:
-		return "map[" + elementType(expr.Key) + "]" + elementType(expr.Value)
-	case *ast.InterfaceType:
-		return "interface {" + elementType(expr.Methods) + "}"
-	case *ast.StructType:
-		return "struct {" + elementType(expr.Fields) + "}"
-	case *ast.ChanType:
-		switch expr.Dir {
-		case ast.SEND:
-			return "chan<- " + elementType(expr.Value)
-		case ast.RECV:
-			return "<-chan " + elementType(expr.Value)
-		default:
-			return "chan " + elementType(expr.Value)
-		}
-	case *ast.Ellipsis:
-		return "..." + elementType(expr.Elt)
-	default:
-		panic(fmt.Errorf("%#v", expr))
-	}
-}
-
 func isPrimitive(name string) bool {
 	switch name {
 	case "bool", "int", "uint", "byte", "rune", "float",
@@ -176,11 +125,6 @@ func isPrimitive(name string) bool {
 	default:
 		return false
 	}
-}
-
-func isPublic(name string) bool {
-	first, _ := utf8.DecodeRuneInString(name)
-	return unicode.IsUpper(first)
 }
 
 type fieldSorter []*Field

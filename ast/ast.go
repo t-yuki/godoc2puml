@@ -1,10 +1,25 @@
 package ast
 
+type Scope struct {
+	Packages map[string]*Package
+}
+
+func NewScope() *Scope {
+	return &Scope{make(map[string]*Package)}
+}
+
 type Package struct {
-	Path          string
-	QualifiedName string
-	Classes       []*Class
-	Interfaces    []*Interface
+	Name       string
+	Classes    []*Class
+	Interfaces []*Interface
+}
+
+func NewPackage(name string) *Package {
+	p := &Package{}
+	p.Name = name
+	p.Classes = make([]*Class, 0, 10)
+	p.Interfaces = make([]*Interface, 0, 10)
+	return p
 }
 
 type Class struct {

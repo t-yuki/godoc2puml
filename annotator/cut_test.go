@@ -8,8 +8,9 @@ import (
 )
 
 func TestCut(t *testing.T) {
+	scope := ast.NewScope()
 	pkg := &ast.Package{
-		QualifiedName: "pkg1",
+		Name: "pkg1",
 		Classes: []*ast.Class{
 			{
 				Name: "A",
@@ -22,47 +23,67 @@ func TestCut(t *testing.T) {
 					{Target: "io.WriteCloser", RelType: ast.Implementation},
 					{Target: "io.ReadWriteCloser", RelType: ast.Implementation},
 					{Target: "fmt.Stringer", RelType: ast.Implementation},
-					{Target: "XError", RelType: ast.Composition},
-					{Target: ".error", RelType: ast.Implementation},
+					{Target: "pkg1.XError", RelType: ast.Composition},
+					{Target: "error", RelType: ast.Implementation},
 				},
 			},
 			{
 				Name: "XError",
 				Relations: []*ast.Relation{
-					{Target: ".error", RelType: ast.Implementation},
+					{Target: "error", RelType: ast.Implementation},
 				},
 			},
 		},
+	}
+	scope.Packages["pkg1"] = pkg
+	scope.Packages["io"] = &ast.Package{
+		Name:    "io",
+		Classes: []*ast.Class{},
 		Interfaces: []*ast.Interface{
-			{Name: "io.Reader", Relations: []*ast.Relation{}},
-			{Name: "io.Writer", Relations: []*ast.Relation{}},
-			{Name: "io.Closer", Relations: []*ast.Relation{}},
-			{Name: "io.ReadWriter", Relations: []*ast.Relation{
+			{Name: "Reader", Relations: []*ast.Relation{}},
+			{Name: "Writer", Relations: []*ast.Relation{}},
+			{Name: "Closer", Relations: []*ast.Relation{}},
+			{Name: "ReadWriter", Relations: []*ast.Relation{
 				{Target: "io.Reader", RelType: ast.Extension},
 				{Target: "io.Writer", RelType: ast.Extension},
 			}},
-			{Name: "io.ReadCloser", Relations: []*ast.Relation{
+			{Name: "ReadCloser", Relations: []*ast.Relation{
 				{Target: "io.Reader", RelType: ast.Extension},
 				{Target: "io.Closer", RelType: ast.Extension},
 			}},
-			{Name: "io.WriteCloser", Relations: []*ast.Relation{
+			{Name: "WriteCloser", Relations: []*ast.Relation{
 				{Target: "io.Writer", RelType: ast.Extension},
 				{Target: "io.Closer", RelType: ast.Extension},
 			}},
-			{Name: "io.ReadWriteCloser", Relations: []*ast.Relation{
+			{Name: "ReadWriteCloser", Relations: []*ast.Relation{
 				{Target: "io.ReadWriter", RelType: ast.Extension},
 				{Target: "io.WriteCloser", RelType: ast.Extension},
 				{Target: "io.ReadCloser", RelType: ast.Extension},
 			}},
-			{Name: "fmt.Stringer", Relations: []*ast.Relation{}},
-			{Name: ".error", Relations: []*ast.Relation{}},
 		},
 	}
-	err := annotator.Cut(pkg)
+	scope.Packages["fmt"] = &ast.Package{
+		Name:    "fmt",
+		Classes: []*ast.Class{},
+		Interfaces: []*ast.Interface{
+			{Name: "Stringer", Relations: []*ast.Relation{}},
+		},
+	}
+	scope.Packages[""] = &ast.Package{
+		Name:    "",
+		Classes: []*ast.Class{},
+		Interfaces: []*ast.Interface{
+			{Name: "error", Relations: []*ast.Relation{}},
+		},
+	}
+	err := annotator.Cut(scope)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(pkg.Classes[0].Relations) != 3 {
+		for _, rel := range pkg.Classes[0].Relations {
+			t.Logf("%+v", rel)
+		}
 		t.Fatalf("io.ReadWriteCloser, fmt.Stringer and XError should be preserved: %#v", pkg.Classes[0].Relations)
 	}
 	if pkg.Classes[0].Relations[0].Target != "io.ReadWriteCloser" {
@@ -71,7 +92,7 @@ func TestCut(t *testing.T) {
 	if pkg.Classes[0].Relations[1].Target != "fmt.Stringer" {
 		t.Fatalf("fmt.Stringer should be preserved: %#v", pkg.Classes[0].Relations[1])
 	}
-	if pkg.Classes[0].Relations[2].Target != "XError" {
+	if pkg.Classes[0].Relations[2].Target != "pkg1.XError" {
 		t.Fatalf("XError should be preserved: %#v", pkg.Classes[0].Relations[2])
 	}
 	if len(pkg.Classes[1].Relations) != 1 {

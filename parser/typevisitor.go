@@ -1,13 +1,23 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
+	"go/parser"
 	"go/token"
+	"log"
+	"os"
+	"path"
+	"strconv"
+	"strings"
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
 type typeVisitor struct {
+	astPackage *ast.Package
+	astFile    *ast.File
 	fileSet    *token.FileSet
 	pkg        *Package
 	name2class map[string]*Class
@@ -15,6 +25,12 @@ type typeVisitor struct {
 
 func (v *typeVisitor) Visit(node ast.Node) ast.Visitor {
 	switch node := node.(type) {
+	case *ast.Package:
+		v.astPackage = node
+		return v
+	case *ast.File:
+		v.astFile = node
+		return v
 	case *ast.TypeSpec:
 		v.visitTypeSpec(node)
 	default:
@@ -54,7 +70,7 @@ func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 		if _, ok := field.Type.(*ast.ArrayType); ok {
 			multiplicity = "*"
 		}
-		elementType := elementType(field.Type)
+		elementType := v.elementType(field.Type)
 		switch {
 		case isPrimitive(elementType):
 			f := &Field{Type: typeGoString(field.Type), Multiplicity: multiplicity}
@@ -65,13 +81,10 @@ func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 			for _, name := range field.Names {
 				f2 := *f
 				f2.Name = name.String()
-				f2.Public = isPublic(f2.Name)
+				f2.Public = ast.IsExported(f2.Name)
 				cl.Fields = append(cl.Fields, &f2)
 			}
 		default:
-			if elementType == "error" {
-				elementType = ".error"
-			}
 			rel := &Relation{Target: elementType, Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
@@ -100,25 +113,21 @@ func (v *typeVisitor) parseMethods(iface *Interface, fields *ast.FieldList) {
 				Arguments: make([]DeclPair, 0, 10),
 				Results:   make([]DeclPair, 0, 10),
 			}
-			method.Public = isPublic(method.Name)
+			method.Public = ast.IsExported(method.Name)
 			parseFuncType(method, typeNode)
 			iface.Methods = append(iface.Methods, method)
 		case *ast.Ident:
 			if len(field.Names) != 0 {
 				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
 			}
-			elementType := typeNode.String()
-			if elementType == "error" {
-				elementType = ".error"
-			}
+			elementType := v.elementType(typeNode)
 			rel := &Relation{Target: elementType, RelType: Extension}
 			iface.Relations = append(iface.Relations, rel)
 		case *ast.SelectorExpr:
 			if len(field.Names) != 0 {
 				panic(fmt.Errorf("unexpected named fields in interface type %#v", field))
 			}
-			elementType := elementType(typeNode)
-			compensateInterface(v.pkg, elementType)
+			elementType := v.elementType(typeNode)
 			rel := &Relation{Target: elementType, RelType: Extension}
 			iface.Relations = append(iface.Relations, rel)
 		default:
@@ -127,23 +136,117 @@ func (v *typeVisitor) parseMethods(iface *Interface, fields *ast.FieldList) {
 	}
 }
 
+func (v *typeVisitor) elementType(expr ast.Node) string {
+	if expr == nil {
+		return ""
+	}
+	p := v.astPackage
+	f := v.astFile
+	switch expr := expr.(type) {
+	case *ast.Ident:
+		name := expr.String()
+		if name == "error" || isPrimitive(name) {
+			return name
+		}
+		for _, f := range p.Files {
+			if f.Scope.Lookup(name) != nil {
+				return v.pkg.Name + "." + name
+			}
+		}
+		// TODO: refactor
+		for _, imp := range f.Imports {
+			local := imp.Name
+			if local == nil || local.String() != `.` {
+				continue
+			}
+			importPath, _ := strconv.Unquote(imp.Path.Value)
+			if local == nil && path.Base(importPath) != name {
+				continue
+			}
+
+			buildPkg, err := build.Import(importPath, ".", build.FindOnly)
+			if err != nil {
+				log.Printf("%#v", err)
+				continue
+			}
+			dir := buildPkg.Dir
+
+			fset := token.NewFileSet()
+			pkgs, err := parser.ParseDir(fset, dir, func(fi os.FileInfo) bool {
+				return !fi.IsDir() && !strings.HasSuffix(fi.Name(), "_test.go")
+			}, 0)
+			if err != nil {
+				log.Printf("%#v", err)
+				continue
+			}
+			for _, pkg := range pkgs {
+				for _, f := range pkg.Files {
+					if f.Scope.Lookup(name) == nil {
+						continue
+					}
+					break
+				}
+				break // break?
+			}
+			return importPath + "." + name
+		}
+		log.Printf("can't resolve name", name)
+		return name
+	case *ast.ArrayType:
+		return v.elementType(expr.Elt)
+	case *ast.StarExpr:
+		return v.elementType(expr.X)
+	case *ast.SelectorExpr:
+		name := expr.X.(*ast.Ident).String()
+		for _, imp := range f.Imports {
+			local := imp.Name
+			if local != nil && local.String() != name {
+				continue
+			}
+			importPath, _ := strconv.Unquote(imp.Path.Value)
+			if local == nil && path.Base(importPath) != name {
+				continue
+			}
+			name = importPath
+			break
+		}
+		return name + "." + expr.Sel.String()
+	case *ast.FuncType:
+		return strings.TrimSpace("func(" + v.elementType(expr.Params) + ") " + v.elementType(expr.Results))
+	case *ast.FieldList:
+		if expr == nil {
+			return ""
+		}
+		var buf bytes.Buffer
+		for _, field := range expr.List {
+			buf.WriteString(v.elementType(field.Type))
+		}
+		return buf.String()
+	case *ast.MapType:
+		return "map[" + v.elementType(expr.Key) + "]" + v.elementType(expr.Value)
+	case *ast.InterfaceType:
+		return "interface {" + v.elementType(expr.Methods) + "}"
+	case *ast.StructType:
+		return "struct {" + v.elementType(expr.Fields) + "}"
+	case *ast.ChanType:
+		switch expr.Dir {
+		case ast.SEND:
+			return "chan<- " + v.elementType(expr.Value)
+		case ast.RECV:
+			return "<-chan " + v.elementType(expr.Value)
+		default:
+			return "chan " + v.elementType(expr.Value)
+		}
+	case *ast.Ellipsis:
+		return "..." + v.elementType(expr.Elt)
+	default:
+		panic(fmt.Errorf("%#v", expr))
+	}
+}
+
 func toSourcePos(fset *token.FileSet, node ast.Node) SourcePos {
 	file := fset.File(node.Pos())
 	start := file.Offset(node.Pos())
 	end := file.Offset(node.End())
 	return SourcePos(fmt.Sprintf("%s:#%d,#%d", file.Name(), start, end))
-}
-
-func compensateInterface(pkg *Package, name string) {
-	for _, iface := range pkg.Interfaces {
-		if iface.Name == name {
-			return
-		}
-	}
-	iface := &Interface{
-		Name:      name,
-		Relations: make([]*Relation, 0),
-		Methods:   make([]*Method, 0),
-	}
-	pkg.Interfaces = append(pkg.Interfaces, iface)
 }
