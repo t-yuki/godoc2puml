@@ -16,7 +16,7 @@ If you want to draw a diagram as a image file, it depends on java and graphviz. 
     $ # or, etc...
     $ sudo apt-get install java graphviz
 
-It also depends on plantuml. Well, it is already attached so you do not need to install separately.
+It also depends on plantuml. <del>Well, it is already attached so you do not need to install separately.</del>
 
 Usage
 -----
@@ -52,6 +52,7 @@ Many, but...
 * elementType of map is not recognized as an association
 * relations of embed struct are not recognized properly
 * interface extensions is recognized only when explicit extensions, not implicit extension
+* cant handle build constraints tag
 * ...
 
 References

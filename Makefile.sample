@@ -1,0 +1,17 @@
+
+PACKAGES := io image net net/http bufio reflect net/rpc go/ast os mime/multipart regexp/syntax
+
+all: $(addsuffix .png, $(PACKAGES))
+
+.PRECIOUS: %.puml
+
+godoc2puml: FORCE
+	go build
+
+%.puml: godoc2puml FORCE
+	./godoc2puml $* >  $(subst /,.,$*).puml
+
+%.png: %.puml
+	java -jar plantuml.jar -pipe -tpng < $(subst /,.,$*).puml > $(subst /,.,$*).png
+
+FORCE:
