@@ -13,7 +13,8 @@ type fields struct {
 	zembed *struct {
 		*bool
 	}
-	//zzzembed []struct { // TODO: what we should do???
-	//	i64 int64
-	//}
+	zzembed []struct {
+		int8
+		u8, uchar uint8
+	}
 }

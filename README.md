@@ -51,6 +51,8 @@ Many, but...
 * noisy
 * elementType of map is not recognized as an association
 * interface extensions is recognized only when explicit extensions, not implicit extension
+* cant parse array- or nested-pointer- embed structs
+* cant detect constructors
 * ...
 
 References

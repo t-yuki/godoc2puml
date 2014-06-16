@@ -64,6 +64,7 @@ func TestParsePackage_Fields(t *testing.T) {
 		{"yyembed.yi32", "[]int32"},
 		{"yyembed.znested.i64", "int64"},
 		{"zembed.bool", "*bool"},
+		{"zzembed", "[]struct{int8, u8 uint8, uchar uint8}"}, // TODO: parse more?
 	}
 
 	for i, v := range table {

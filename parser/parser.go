@@ -108,15 +108,25 @@ func typeGoString(expr ast.Node) string {
 			if i != 0 {
 				buf.WriteString(", ")
 			}
-			buf.WriteString(typeGoString(field.Type))
+			if len(field.Names) == 0 {
+				buf.WriteString(typeGoString(field.Type))
+			}
+			for i, name := range field.Names {
+				if i != 0 {
+					buf.WriteString(", ")
+				}
+				buf.WriteString(name.String())
+				buf.WriteString(" ")
+				buf.WriteString(typeGoString(field.Type))
+			}
 		}
 		return buf.String()
 	case *ast.MapType:
 		return "map[" + typeGoString(expr.Key) + "]" + typeGoString(expr.Value)
 	case *ast.InterfaceType:
-		return "interface {" + typeGoString(expr.Methods) + "}"
+		return "interface{" + typeGoString(expr.Methods) + "}"
 	case *ast.StructType:
-		return "struct {" + typeGoString(expr.Fields) + "}"
+		return "struct{" + typeGoString(expr.Fields) + "}"
 	case *ast.ChanType:
 		switch expr.Dir {
 		case ast.SEND:
@@ -148,7 +158,7 @@ func isPrimitive(name string) bool {
 	default:
 	}
 	switch {
-	case strings.ContainsAny(name, " [("):
+	case strings.ContainsAny(name, " [({"):
 		return true
 	default:
 		return false
