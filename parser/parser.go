@@ -14,37 +14,65 @@ import (
 )
 
 func ParsePackage(packagePath string) (*Package, error) {
-	p := NewPackage(packagePath)
-
-	buildPkg, err := build.Import(packagePath, ".", build.FindOnly)
+	fset, pkg, err := importPackage(packagePath)
 	if err != nil {
 		return nil, err
+	}
+	p := NewPackage(packagePath)
+	err = parseGoAST(p, fset, pkg)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+func importPackage(path string) (*token.FileSet, *ast.Package, error) {
+	buildPkg, err := build.Import(path, ".", 0)
+	if err != nil {
+		return nil, nil, err
 	}
 	dir := buildPkg.Dir
 
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, dir, func(fi os.FileInfo) bool {
-		return !fi.IsDir() && !strings.HasSuffix(fi.Name(), "_test.go")
+		for _, ignored := range buildPkg.IgnoredGoFiles {
+			if fi.Name() == ignored {
+				return false
+			}
+		}
+		for _, gofile := range buildPkg.GoFiles { // GoFiles doesn't contain tests
+			if fi.Name() == gofile {
+				return true
+			}
+		}
+		return false
 	}, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
+	if len(pkgs) != 1 {
+		return nil, nil, fmt.Errorf("package %s contains %d packges, it must be 1", path, len(pkgs))
+	}
 	for _, pkg := range pkgs {
-		name2class := make(map[string]*Class)
-		tv := &typeVisitor{pkg: p, name2class: name2class, fileSet: fset}
-		mv := &methodVisitor{pkg: p, name2class: name2class}
-		ast.Walk(tv, pkg)
-		ast.Walk(mv, pkg)
-		for _, class := range p.Classes {
-			sort.Sort(fieldSorter(class.Fields))
-			sort.Sort(methodSorter(class.Methods))
-		}
-		for _, iface := range p.Interfaces {
-			sort.Sort(methodSorter(iface.Methods))
-		}
+		return fset, pkg, nil
 	}
-	return p, nil
+	panic("unreachable code")
+}
+
+func parseGoAST(p *Package, fset *token.FileSet, pkg *ast.Package) error {
+	name2class := make(map[string]*Class)
+	tv := &typeVisitor{pkg: p, name2class: name2class, fileSet: fset}
+	mv := &methodVisitor{pkg: p, name2class: name2class}
+	ast.Walk(tv, pkg)
+	ast.Walk(mv, pkg)
+	for _, class := range p.Classes {
+		sort.Sort(fieldSorter(class.Fields))
+		sort.Sort(methodSorter(class.Methods))
+	}
+	for _, iface := range p.Interfaces {
+		sort.Sort(methodSorter(iface.Methods))
+	}
+	return nil
 }
 
 func typeGoString(expr ast.Node) string {
