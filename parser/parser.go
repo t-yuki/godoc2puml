@@ -86,7 +86,7 @@ func typeGoString(expr ast.Node) string {
 	case *ast.ArrayType:
 		return "[]" + typeGoString(expr.Elt)
 	case *ast.StarExpr:
-		return typeGoString(expr.X)
+		return "*" + typeGoString(expr.X)
 	case *ast.SelectorExpr:
 		return typeGoString(expr.X) + "." + expr.Sel.String()
 	case *ast.FuncType:

@@ -48,7 +48,7 @@ func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
 			Methods:   make([]*Method, 0, 10),
 			Pos:       toSourcePos(v.fileSet, node),
 		}
-		v.parseFields(cl, typeNode.Fields)
+		v.parseFields(cl, "", typeNode.Fields)
 		v.pkg.Classes = append(v.pkg.Classes, cl)
 		v.name2class[cl.Name] = cl
 	case *ast.InterfaceType:
@@ -64,11 +64,32 @@ func (v *typeVisitor) visitTypeSpec(node *ast.TypeSpec) {
 	}
 }
 
-func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
+func (v *typeVisitor) parseFields(cl *Class, prefix string, fields *ast.FieldList) {
 	for _, field := range fields.List {
 		multiplicity := ""
-		if _, ok := field.Type.(*ast.ArrayType); ok {
+		switch fType := field.Type.(type) {
+		case *ast.ArrayType:
 			multiplicity = "*"
+			// TODO: we should nested array struct in runtime.Memstats like:
+			// type A struct { X []struct{ bool }; Y []*struct{ *A }; Z *[]struct{ []*A } }
+		case *ast.StarExpr:
+			if fType, ok := fType.X.(*ast.StructType); ok { // case: type A struct { X *struct{ bool } }
+				if len(field.Names) == 0 { // anonymous field
+					panic("anonymous struct is prohibited in go spec")
+				}
+				for _, name := range field.Names {
+					v.parseFields(cl, prefix+name.String()+".", fType.Fields)
+				}
+				continue
+			}
+		case *ast.StructType:
+			if len(field.Names) == 0 { // anonymous field
+				panic("anonymous struct is prohibited in go spec")
+			}
+			for _, name := range field.Names {
+				v.parseFields(cl, prefix+name.String()+".", fType.Fields)
+			}
+			continue
 		}
 		elementType := v.elementType(field.Type)
 		switch {
@@ -76,11 +97,12 @@ func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 			f := &Field{Type: typeGoString(field.Type), Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
+				f.Name = prefix + elementType
 				cl.Fields = append(cl.Fields, f)
 			}
 			for _, name := range field.Names {
 				f2 := *f
-				f2.Name = name.String()
+				f2.Name = prefix + name.String()
 				f2.Public = ast.IsExported(f2.Name)
 				cl.Fields = append(cl.Fields, &f2)
 			}
@@ -88,12 +110,17 @@ func (v *typeVisitor) parseFields(cl *Class, fields *ast.FieldList) {
 			rel := &Relation{Target: elementType, Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
-				rel.RelType = Composition
+				if prefix == "" {
+					rel.RelType = Composition
+				} else {
+					rel.Label = prefix + path.Ext(elementType)[1:]
+					rel.RelType = Association
+				}
 				cl.Relations = append(cl.Relations, rel)
 			}
 			for _, name := range field.Names {
 				rel2 := *rel
-				rel2.Label = name.String()
+				rel2.Label = prefix + name.String()
 				rel2.RelType = Association
 				cl.Relations = append(cl.Relations, &rel2)
 			}

@@ -43,7 +43,6 @@ func TestParsePackage_BuildTags(t *testing.T) {
 }
 
 func TestParsePackage_Fields(t *testing.T) {
-	t.Skip("not implemented yet")
 	pkg, err := parser.ParsePackage("./testdata/fields")
 	if err != nil {
 		t.Fatal(err)
@@ -55,10 +54,16 @@ func TestParsePackage_Fields(t *testing.T) {
 		Type string
 	}{
 		{"uint8", "uint8"},
-		{"i8", "int8"},
-		{"embed.int16", "*int16"},
-		{"embed.i32", "[]int32"},
-		{"embed.embed.nested.i64", "int64"},
+		{"xi8", "int8"},
+		{"yembed.int16", "*int16"},
+		{"yembed.xi32", "[]int32"},
+		{"yembed.yi32", "[]int32"},
+		{"yembed.znested.i64", "int64"},
+		{"yyembed.int16", "*int16"},
+		{"yyembed.xi32", "[]int32"},
+		{"yyembed.yi32", "[]int32"},
+		{"yyembed.znested.i64", "int64"},
+		{"zembed.bool", "*bool"},
 	}
 
 	for i, v := range table {
@@ -73,7 +78,6 @@ func TestParsePackage_Fields(t *testing.T) {
 }
 
 func TestParsePackage_Relations(t *testing.T) {
-	t.Skip("not implemented yet")
 	path := "./testdata/relations"
 	pkg, err := parser.ParsePackage(path)
 	if err != nil {
@@ -82,25 +86,35 @@ func TestParsePackage_Relations(t *testing.T) {
 	relations := pkg.Classes[0].Relations
 
 	table := []struct {
-		target       string
-		reltype      ast.RelationType
-		multiplicity string
+		Target       string
+		Label        string
+		RelType      ast.RelationType
+		Multiplicity string
 	}{
-		{"struct1", ast.Composition, ""},
-		{"iface1", ast.Implementation, ""},
-		{"association", ast.Association, ""},
-		{"embed.struct1", ast.Association, ""},
-		{"embed.iface1", ast.Association, ""},
-		{"embed.nested.if1", ast.Association, "*"},
+		{"struct1", "", ast.Composition, ""},
+		{"iface1", "", ast.Composition, ""}, // even if iface1 is interface, it can't be detected on parse
+		{"struct1", "xassociation", ast.Association, ""},
+		{"struct1", "yembed.struct1", ast.Association, ""},
+		{"iface1", "yembed.iface1", ast.Association, ""},
+		{"iface1", "yembed.nested.if1", ast.Association, "*"},
+		{"struct1", "zembed.struct1", ast.Association, ""},
+		{"iface1", "zembed.iface1", ast.Association, ""},
+		{"iface1", "zembed.nested.if1", ast.Association, "*"},
 	}
 
 	for i, v := range table {
 		rel := relations[i]
-		if rel.Target != path+"."+v.target {
-			t.Fatalf("%d target want:%v but:%v", i, path+"."+v.target, rel.Target)
+		if rel.Label != v.Label {
+			t.Fatalf("%d Label want:%v but:%v", i, v.Label, rel.Label)
 		}
-		if rel.RelType != v.reltype {
-			t.Fatalf("%d reltype want:%v but:%v", i, v.reltype, rel.RelType)
+		if rel.Target != path+"."+v.Target {
+			t.Fatalf("%d Target want:%v but:%v", i, path+"."+v.Target, rel.Target)
+		}
+		if rel.RelType != v.RelType {
+			t.Fatalf("%d RelType want:%v but:%v", i, v.RelType, rel.RelType)
+		}
+		if rel.Multiplicity != v.Multiplicity {
+			t.Fatalf("%d Multiplicity want:%v but:%v", i, v.Multiplicity, rel.Multiplicity)
 		}
 	}
 

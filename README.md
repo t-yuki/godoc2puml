@@ -8,7 +8,7 @@ Installation
 
 Just type the following to install the program:
 
-    $ go get -u github.com/t-yuki/godoc2puml/...
+    $ go get -u github.com/t-yuki/godoc2puml
 
 If you want to draw a diagram as a image file, it depends on java and graphviz. you must install them:
 
@@ -50,9 +50,7 @@ Many, but...
 * enum pattern is not recognized
 * noisy
 * elementType of map is not recognized as an association
-* relations of embed struct are not recognized properly
 * interface extensions is recognized only when explicit extensions, not implicit extension
-* cant handle build constraints tag
 * ...
 
 References
