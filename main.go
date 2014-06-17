@@ -4,6 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strings"
+
+	"go/build"
 
 	"github.com/t-yuki/godoc2puml/annotator"
 	"github.com/t-yuki/godoc2puml/ast"
@@ -41,35 +47,154 @@ func main() {
 	if len(packages) == 0 {
 		panic("godoc2uml without explicit package path is not implemented yet")
 	}
-	if len(packages) != 1 {
-		panic("godoc2uml with multiple packages is not implemented yet")
-	}
 
 	scope := ast.NewScope()
 
-	pkg, err := parser.ParsePackage(packages[0])
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "package parse error:%#v", err)
-		return
+	for _, path := range packages {
+		packageList := matchPackages(path)
+		for _, path := range packageList {
+			pkg, err := parser.ParsePackage(path)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "package %s parse error:%#v\n", path, err)
+				continue
+			}
+
+			err = annotator.Oracle(pkg)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "annotate error %s: %#v\n", path, err)
+				continue
+			}
+			scope.Packages[pkg.Name] = pkg
+		}
 	}
 
-	err = annotator.Oracle(pkg)
+	err := annotator.Complete(scope)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
-		return
-	}
-	scope.Packages[pkg.Name] = pkg
-
-	err = annotator.Complete(scope)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
+		fmt.Fprintf(os.Stderr, "annotate error:%#v\n", err)
 		return
 	}
 
 	err = annotator.Cut(scope)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "annotate error:%#v", err)
+		fmt.Fprintf(os.Stderr, "annotate error:%#v\n", err)
 		return
 	}
 	printer.FprintPlantUML(os.Stdout, scope)
+}
+
+// from go/src/cmd/go/main.go
+// Copyright 2011 The Go Authors.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+var (
+	goroot       = filepath.Clean(runtime.GOROOT())
+	gorootSrcPkg = filepath.Join(goroot, "src/pkg")
+)
+
+// hasPathPrefix reports whether the path s begins with the
+// elements in prefix.
+func hasPathPrefix(s, prefix string) bool {
+	switch {
+	default:
+		return false
+	case len(s) == len(prefix):
+		return s == prefix
+	case len(s) > len(prefix):
+		if prefix != "" && prefix[len(prefix)-1] == '/' {
+			return strings.HasPrefix(s, prefix)
+		}
+		return s[len(prefix)] == '/' && s[:len(prefix)] == prefix
+	}
+}
+
+// treeCanMatchPattern(pattern)(name) reports whether
+// name or children of name can possibly match pattern.
+// Pattern is the same limited glob accepted by matchPattern.
+func treeCanMatchPattern(pattern string) func(name string) bool {
+	wildCard := false
+	if i := strings.Index(pattern, "..."); i >= 0 {
+		wildCard = true
+		pattern = pattern[:i]
+	}
+	return func(name string) bool {
+		return len(name) <= len(pattern) && hasPathPrefix(pattern, name) ||
+			wildCard && strings.HasPrefix(name, pattern)
+	}
+}
+
+func matchPackages(pattern string) []string {
+	match := func(string) bool { return true }
+	treeCanMatch := func(string) bool { return true }
+	if pattern != "all" && pattern != "std" {
+		match = matchPattern(pattern)
+		treeCanMatch = treeCanMatchPattern(pattern)
+	}
+
+	have := map[string]bool{
+		"builtin": true, // ignore pseudo-package that exists only for documentation
+	}
+	if !build.Default.CgoEnabled {
+		have["runtime/cgo"] = true // ignore during walk
+	}
+	var pkgs []string
+
+	for _, src := range build.Default.SrcDirs() {
+		if pattern == "std" && src != gorootSrcPkg {
+			continue
+		}
+		src = filepath.Clean(src) + string(filepath.Separator)
+		filepath.Walk(src, func(path string, fi os.FileInfo, err error) error {
+			if err != nil || !fi.IsDir() || path == src {
+				return nil
+			}
+
+			// Avoid .foo, _foo, and testdata directory trees.
+			_, elem := filepath.Split(path)
+			if strings.HasPrefix(elem, ".") || strings.HasPrefix(elem, "_") || elem == "testdata" {
+				return filepath.SkipDir
+			}
+
+			name := filepath.ToSlash(path[len(src):])
+			if pattern == "std" && strings.Contains(name, ".") {
+				return filepath.SkipDir
+			}
+			if !treeCanMatch(name) {
+				return filepath.SkipDir
+			}
+			if have[name] {
+				return nil
+			}
+			have[name] = true
+			if !match(name) {
+				return nil
+			}
+			_, err = build.Default.ImportDir(path, 0)
+			if err != nil {
+				if _, noGo := err.(*build.NoGoError); noGo {
+					return nil
+				}
+			}
+			pkgs = append(pkgs, name)
+			return nil
+		})
+	}
+	return pkgs
+}
+
+// matchPattern(pattern)(name) reports whether
+// name matches pattern.  Pattern is a limited glob
+// pattern in which '...' means 'any string' and there
+// is no other special syntax.
+func matchPattern(pattern string) func(name string) bool {
+	re := regexp.QuoteMeta(pattern)
+	re = strings.Replace(re, `\.\.\.`, `.*`, -1)
+	// Special case: foo/... matches foo too.
+	if strings.HasSuffix(re, `/.*`) {
+		re = re[:len(re)-len(`/.*`)] + `(/.*)?`
+	}
+	reg := regexp.MustCompile(`^` + re + `$`)
+	return func(name string) bool {
+		return reg.MatchString(name)
+	}
 }

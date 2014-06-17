@@ -5,6 +5,18 @@ all: $(addsuffix .png, $(PACKAGES))
 
 .PRECIOUS: %.puml
 
+all.net.puml:
+	./godoc2puml net net/http net/mail net/rpc net/smtp net/textproto net/url > $@
+
+all.net.http.puml:
+	./godoc2puml net/http net/http/cgi net/http/cookiejar net/http/fcgi net/http/httptest net/http/httputil net/http/pprof > $@
+
+all.image.puml:
+	./godoc2puml image image/color image/color/palette image/draw image/png image/gif image/jpeg > $@
+
+all.go.puml:
+	./godoc2puml go/ast go/build go/doc go/format go/parser go/printer go/scanner go/token > $@
+
 godoc2puml: FORCE
 	go build
 
@@ -12,6 +24,6 @@ godoc2puml: FORCE
 	./godoc2puml $* >  $(subst /,.,$*).puml
 
 %.png: %.puml
-	java -jar plantuml.jar -pipe -tpng < $(subst /,.,$*).puml > $(subst /,.,$*).png
+	java -Xmx1g -jar plantuml.jar -pipe -tpng < $(subst /,.,$*).puml > $(subst /,.,$*).png
 
 FORCE:
