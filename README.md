@@ -55,6 +55,11 @@ Many, but...
 * cant detect constructors
 * ...
 
+Limitations
+-----------
+
+* Types declared in CgoFiles will cause convert error due to oracle library
+
 References
 ----------
 * [Plant UML](http://plantuml.sourceforge.net/)

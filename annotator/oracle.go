@@ -33,7 +33,7 @@ func Oracle(pkg *ast.Package) error {
 
 		res, err := o.Query("implements", qpos)
 		if err != nil {
-			return fmt.Errorf("oracle annotator: query error: %+v", err)
+			return fmt.Errorf("oracle annotator: query error: %+v, %v", err, class.Pos)
 		}
 		impls := res.Serial().Implements
 		for _, target := range impls.AssignableFromPtr {

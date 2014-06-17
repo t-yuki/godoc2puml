@@ -45,6 +45,9 @@ func importPackage(path string) (*token.FileSet, *ast.Package, error) {
 				return true
 			}
 		}
+		// we can also parse buildPkg.CgoFiles
+		// however, due to oracle can't parse CgoFiles, we don't parse them
+		// so any cgo user should not contain type and interfaces in CgoFiles that is `import "C"` is declared
 		return false
 	}, 0)
 	if err != nil {
