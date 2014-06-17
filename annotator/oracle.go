@@ -11,11 +11,31 @@ import (
 	"github.com/t-yuki/godoc2puml/ast"
 )
 
-func Oracle(pkg *ast.Package) error {
+// Oracle annotates `pkg` using go.tools/oracle interface implements detector.
+// It uses `scopes` as analysis scope.
+// If `scopes` is none of one of `scopes` is zero string, it uses unit tests as scope.
+func Oracle(pkg *ast.Package, scopes ...string) error {
 	settings := build.Default
 	settings.BuildTags = []string{} // TODO
 	conf := loader.Config{Build: &settings, SourceImports: true}
-	conf.ImportWithTests(pkg.Name)
+
+	withTests := false
+	if len(scopes) == 0 {
+		withTests = true
+	}
+	for _, scope := range scopes {
+		if scope == "" {
+			withTests = true
+		} else {
+			conf.Import(scope)
+		}
+	}
+	if withTests {
+		conf.ImportWithTests(pkg.Name)
+	} else {
+		conf.Import(pkg.Name)
+	}
+
 	iprog, err := conf.Load()
 	if err != nil {
 		return fmt.Errorf("oracle annotator: conf load error: %+v", err)

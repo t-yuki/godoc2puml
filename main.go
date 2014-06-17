@@ -19,6 +19,7 @@ import (
 
 type Config struct {
 	Help     bool
+	Scope    string
 	Format   string
 	Filter   string
 	HTTPAddr string
@@ -28,6 +29,7 @@ var config Config
 
 func init() {
 	flag.BoolVar(&config.Help, "h", false, "show this help")
+	flag.StringVar(&config.Scope, "scope", "", `set analysis scope (main) package. if it is omitted, scope is tests in the same directory`)
 	flag.StringVar(&config.Format, "t", "text", `output format
         puml:  write PlantUML format`)
 	flag.Usage = func() {
@@ -59,7 +61,7 @@ func main() {
 				continue
 			}
 
-			err = annotator.Oracle(pkg)
+			err = annotator.Oracle(pkg, config.Scope)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "annotate error %s: %#v\n", path, err)
 				continue

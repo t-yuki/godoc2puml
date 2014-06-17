@@ -1,20 +1,23 @@
 
 PACKAGES := io image net net/http bufio reflect net/rpc go/ast os mime/multipart regexp/syntax
 
-all: $(addsuffix .png, $(PACKAGES))
+all: $(addsuffix .png, $(PACKAGES)) godoc2puml.png all.net.png all.net.http.png all.image.png all.go.png
 
 .PRECIOUS: %.puml
 
-all.net.puml:
+godoc2puml.puml: FORCE
+	./godoc2puml -scope=github.com/t-yuki/godoc2puml github.com/t-yuki/godoc2puml/... > $@
+
+all.net.puml: FORCE
 	./godoc2puml net net/http net/mail net/rpc net/smtp net/textproto net/url > $@
 
-all.net.http.puml:
+all.net.http.puml: FORCE
 	./godoc2puml net/http net/http/cgi net/http/cookiejar net/http/fcgi net/http/httptest net/http/httputil net/http/pprof > $@
 
-all.image.puml:
+all.image.puml: FORCE
 	./godoc2puml image image/color image/color/palette image/draw image/png image/gif image/jpeg > $@
 
-all.go.puml:
+all.go.puml: FORCE
 	./godoc2puml go/ast go/build go/doc go/format go/parser go/printer go/scanner go/token > $@
 
 godoc2puml: FORCE
