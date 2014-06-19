@@ -16,11 +16,12 @@ import (
 )
 
 type typeVisitor struct {
-	astPackage *ast.Package
-	astFile    *ast.File
-	fileSet    *token.FileSet
-	pkg        *Package
-	name2class map[string]*Class
+	astPackage    *ast.Package
+	astFile       *ast.File
+	fileSet       *token.FileSet
+	pkg           *Package
+	name2class    map[string]*Class
+	fieldPackages []string
 }
 
 func (v *typeVisitor) Visit(node ast.Node) ast.Visitor {
@@ -93,7 +94,7 @@ func (v *typeVisitor) parseFields(cl *Class, prefix string, fields *ast.FieldLis
 		}
 		elementType := v.elementType(field.Type)
 		switch {
-		case isPrimitive(elementType):
+		case isPrimitive(elementType) || isField(v.fieldPackages, elementType):
 			f := &Field{Type: typeGoString(field.Type), Multiplicity: multiplicity}
 
 			if len(field.Names) == 0 { // anonymous field
@@ -276,4 +277,19 @@ func toSourcePos(fset *token.FileSet, node ast.Node) SourcePos {
 	start := file.Offset(node.Pos())
 	end := file.Offset(node.End())
 	return SourcePos(fmt.Sprintf("%s:#%d,#%d", file.Name(), start, end))
+}
+
+func isField(packages []string, name string) bool {
+	actual := ""
+	for i := len(name) - 1; i >= 0 && name[i] != '/'; i-- {
+		if name[i] == '.' {
+			actual = name[:i]
+		}
+	}
+	for _, pkg := range packages {
+		if pkg == actual {
+			return true
+		}
+	}
+	return false
 }

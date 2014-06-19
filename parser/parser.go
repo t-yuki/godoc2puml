@@ -13,13 +13,13 @@ import (
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
-func ParsePackage(packagePath string) (*Package, error) {
+func ParsePackage(packagePath string, fieldPackages ...string) (*Package, error) {
 	fset, pkg, err := importPackage(packagePath)
 	if err != nil {
 		return nil, err
 	}
 	p := NewPackage(packagePath)
-	err = parseGoAST(p, fset, pkg)
+	err = parseGoAST(p, fset, pkg, fieldPackages)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func importPackage(path string) (*token.FileSet, *ast.Package, error) {
 	panic("unreachable code")
 }
 
-func parseGoAST(p *Package, fset *token.FileSet, pkg *ast.Package) error {
+func parseGoAST(p *Package, fset *token.FileSet, pkg *ast.Package, fieldPackages []string) error {
 	name2class := make(map[string]*Class)
-	tv := &typeVisitor{pkg: p, name2class: name2class, fileSet: fset}
+	tv := &typeVisitor{pkg: p, name2class: name2class, fileSet: fset, fieldPackages: fieldPackages}
 	mv := &methodVisitor{pkg: p, name2class: name2class}
 	ast.Walk(tv, pkg)
 	ast.Walk(mv, pkg)

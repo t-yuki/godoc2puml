@@ -21,6 +21,7 @@ type Config struct {
 	Help     bool
 	Scope    string
 	Lolipop  string
+	Field    string
 	Format   string
 	Filter   string
 	HTTPAddr string
@@ -32,6 +33,7 @@ func init() {
 	flag.BoolVar(&config.Help, "h", false, "show this help")
 	flag.StringVar(&config.Scope, "scope", "", `set analysis scope (main) package. if it is omitted, scope is tests in the same directory`)
 	flag.StringVar(&config.Lolipop, "lolipop", "", `set package names in comma-separated strings that use lolipop-style interface relationship instead of implementation`)
+	flag.StringVar(&config.Field, "field", "", `set package names in comma-separated strings that use field relationship instead of association`)
 	flag.StringVar(&config.Format, "t", "text", `output format
         puml:  write PlantUML format`)
 	flag.Usage = func() {
@@ -57,7 +59,7 @@ func main() {
 	for _, path := range packages {
 		packageList := matchPackages(path)
 		for _, path := range packageList {
-			pkg, err := parser.ParsePackage(path)
+			pkg, err := parser.ParsePackage(path, strings.Split(config.Field, ",")...)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "package %s parse error:%#v\n", path, err)
 				continue
