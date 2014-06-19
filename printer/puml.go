@@ -14,7 +14,9 @@ var pumlTemplate = template.Must(template.New("plantuml").Funcs(pumlFuncs).Parse
 
 set namespaceSeparator /
 
-{{ range $p := .Packages }}
+{{ $lolipop := .Lolipop }}
+
+{{ range $p := .Scope.Packages }}
 {{ range .Classes }}
 	class {{ joinName $p.Name .Name }} {
 {{ range .Fields}}
@@ -34,10 +36,10 @@ set namespaceSeparator /
 {{ end }}
 
 {{ range $cl := .Classes }} {{ range .Relations}}
-	"{{ joinName $p.Name $cl.Name }}" {{relType .RelType}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}"{{qualifiedName .Target}}" {{if .Label}}: {{.Label}}{{end}}
+	"{{ joinName $p.Name $cl.Name }}" {{relType .RelType (isLolipop $lolipop .Target)}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}"{{qualifiedName .Target}}" {{if .Label}}: {{.Label}}{{end}}
 {{ end }} {{ end }}
 {{ range $iface := .Interfaces }} {{ range .Relations}}
-	"{{ joinName $p.Name $iface.Name }}" {{relType .RelType}} "{{qualifiedName .Target}}"
+	"{{ joinName $p.Name $iface.Name }}" {{relType .RelType false}} "{{qualifiedName .Target}}"
 {{ end }} {{ end }}
 {{ end }}
 
@@ -52,16 +54,17 @@ var pumlFuncs = map[string]interface{}{
 	"methodResults": pumlMethodResults,
 	"qualifiedName": pumlQualifiedName,
 	"joinName":      pumlJoinName,
+	"isLolipop":     pumlIsLolipop,
 }
 
-func FprintPlantUML(w io.Writer, scope *ast.Scope) {
-	err := pumlTemplate.Execute(w, scope)
+func FprintPlantUML(w io.Writer, scope *ast.Scope, lolipopPackages []string) {
+	err := pumlTemplate.Execute(w, map[string]interface{}{"Scope": scope, "Lolipop": lolipopPackages})
 	if err != nil {
 		panic(err)
 	}
 }
 
-func pumlRelType(relType ast.RelationType) string {
+func pumlRelType(relType ast.RelationType, lolipop bool) string {
 	switch relType {
 	case ast.Association:
 		return "-->"
@@ -72,7 +75,10 @@ func pumlRelType(relType ast.RelationType) string {
 	case ast.Agregation:
 		return "o--"
 	case ast.Implementation:
-		return "..|>" // lolipop style?: "-()"
+		if lolipop {
+			return "-()"
+		}
+		return "..|>"
 	}
 	panic(relType)
 }
@@ -116,4 +122,19 @@ func pumlJoinName(name1 string, name2 string) string {
 		return name1
 	}
 	return name1 + "/" + name2
+}
+
+func pumlIsLolipop(packages []string, name string) bool {
+	actual := ""
+	for i := len(name) - 1; i >= 0 && name[i] != '/'; i-- {
+		if name[i] == '.' {
+			actual = name[:i]
+		}
+	}
+	for _, pkg := range packages {
+		if pkg == actual {
+			return true
+		}
+	}
+	return false
 }

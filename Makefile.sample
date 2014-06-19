@@ -9,7 +9,7 @@ godoc2puml.puml: FORCE
 	./godoc2puml -scope=github.com/t-yuki/godoc2puml github.com/t-yuki/godoc2puml/... > $@
 
 all.net.puml: FORCE
-	./godoc2puml net net/http net/mail net/rpc net/smtp net/textproto net/url > $@
+	./godoc2puml -lolipop=bufio,io,fmt,sync, net net/http net/mail net/rpc net/smtp net/textproto net/url > $@
 
 all.net.http.puml: FORCE
 	./godoc2puml net/http net/http/cgi net/http/cookiejar net/http/fcgi net/http/httptest net/http/httputil net/http/pprof > $@

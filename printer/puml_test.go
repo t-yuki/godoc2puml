@@ -16,7 +16,7 @@ func TestFprintPlantUML(t *testing.T) {
 		Name:    "pkg1",
 		Classes: []*ast.Class{},
 	}
-	printer.FprintPlantUML(buf, scope)
+	printer.FprintPlantUML(buf, scope, []string{})
 }
 
 func TestFprintPlantUMLStdLibs(t *testing.T) {
@@ -28,7 +28,7 @@ func TestFprintPlantUMLStdLibs(t *testing.T) {
 		}
 		scope.Packages[pkg.Name] = pkg
 		buf := &bytes.Buffer{}
-		printer.FprintPlantUML(buf, scope)
+		printer.FprintPlantUML(buf, scope, []string{})
 		t.Log(buf)
 	}
 

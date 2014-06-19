@@ -20,6 +20,7 @@ import (
 type Config struct {
 	Help     bool
 	Scope    string
+	Lolipop  string
 	Format   string
 	Filter   string
 	HTTPAddr string
@@ -30,6 +31,7 @@ var config Config
 func init() {
 	flag.BoolVar(&config.Help, "h", false, "show this help")
 	flag.StringVar(&config.Scope, "scope", "", `set analysis scope (main) package. if it is omitted, scope is tests in the same directory`)
+	flag.StringVar(&config.Lolipop, "lolipop", "", `set package names in comma-separated strings that use lolipop-style interface relationship instead of implementation`)
 	flag.StringVar(&config.Format, "t", "text", `output format
         puml:  write PlantUML format`)
 	flag.Usage = func() {
@@ -81,7 +83,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "annotate error:%#v\n", err)
 		return
 	}
-	printer.FprintPlantUML(os.Stdout, scope)
+	printer.FprintPlantUML(os.Stdout, scope, strings.Split(config.Lolipop, ","))
 }
 
 // from go/src/cmd/go/main.go
