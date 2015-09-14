@@ -3,12 +3,11 @@ package annotator
 import (
 	"fmt"
 	"go/build"
-	"log"
 
-	"code.google.com/p/go.tools/go/loader"
-	"code.google.com/p/go.tools/oracle"
-	"code.google.com/p/go.tools/oracle/serial"
 	"github.com/t-yuki/godoc2puml/ast"
+	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/oracle"
+	"golang.org/x/tools/oracle/serial"
 )
 
 // Oracle annotates `pkg` using go.tools/oracle interface implements detector.
@@ -17,7 +16,7 @@ import (
 func Oracle(pkg *ast.Package, scopes ...string) error {
 	settings := build.Default
 	settings.BuildTags = []string{} // TODO
-	conf := loader.Config{Build: &settings, SourceImports: true}
+	conf := loader.Config{Build: &settings}
 
 	withTests := false
 	if len(scopes) == 0 {
@@ -36,26 +35,23 @@ func Oracle(pkg *ast.Package, scopes ...string) error {
 		conf.Import(pkg.Name)
 	}
 
-	iprog, err := conf.Load()
+	_, err := conf.Load()
 	if err != nil {
 		return fmt.Errorf("oracle annotator: conf load error: %+v", err)
 	}
-	o, err := oracle.New(iprog, nil, false)
-	if err != nil {
-		return fmt.Errorf("oracle annotator: create error: %+v", err)
-	}
-	for _, class := range pkg.Classes {
-		qpos, err := oracle.ParseQueryPos(iprog, string(class.Pos), false)
-		if err != nil {
-			log.Printf("oracle annotator: parse query pos error: %+v, %+v", err, class.Pos)
-			continue
-		}
 
-		res, err := o.Query("implements", qpos)
+	for _, class := range pkg.Classes {
+		query := oracle.Query{
+			Mode:  "implements",
+			Pos:   string(class.Pos),
+			Build: conf.Build,
+			Scope: scopes,
+		}
+		err = oracle.Run(&query)
 		if err != nil {
 			return fmt.Errorf("oracle annotator: query error: %+v, %v", err, class.Pos)
 		}
-		impls := res.Serial().Implements
+		impls := query.Serial().Implements
 		for _, target := range impls.AssignableFromPtr {
 			addImplements(class, target)
 		}

@@ -14,7 +14,7 @@ If you want to draw a diagram as a image file, it depends on java and graphviz. 
 
     $ sudo yum install java graphviz
     $ # or, etc...
-    $ sudo apt-get install java graphviz
+    $ sudo apt-get install openjdk-7-jre-headless graphviz
 
 It also depends on plantuml. <del>Well, it is already attached so you do not need to install separately.</del>
 
