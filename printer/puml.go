@@ -14,34 +14,45 @@ var pumlTemplate = template.Must(template.New("plantuml").Funcs(pumlFuncs).Parse
 
 set namespaceSeparator /
 
-{{ $lolipop := .Lolipop }}
+{{- $lolipop := .Lolipop }}
 
-{{ range $p := .Scope.Packages }}
-{{ range .Classes }}
-	class {{ joinName $p.Name .Name }} {
-{{ range .Fields}}
-		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}} {{.Type}}
-{{ end }}
-{{ range .Methods}}
-		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}}({{ methodArgs .Arguments}}) {{ methodResults .Results}}
-{{ end }}
-	}
-{{ end }}
-{{ range .Interfaces }}
-	interface {{ joinName $p.Name .Name }} {
-{{ range .Methods}}
-		{{ if .Public }}+{{ else }}~{{ end }}{{.Name}}({{ methodArgs .Arguments}}) {{ methodResults .Results}}
-{{ end }}
-	}
-{{ end }}
+{{- range $p := .Scope.Packages -}}
+  {{- range .Classes }}
 
-{{ range $cl := .Classes }} {{ range .Relations}}
-	"{{ joinName $p.Name $cl.Name }}" {{relType .RelType (isLolipop $lolipop .Target)}} {{if .Multiplicity}}"{{.Multiplicity}}" {{end}}"{{qualifiedName .Target}}" {{if .Label}}: {{.Label}}{{end}}
-{{ end }} {{ end }}
-{{ range $iface := .Interfaces }} {{ range .Relations}}
-	"{{ joinName $p.Name $iface.Name }}" {{relType .RelType false}} "{{qualifiedName .Target}}"
-{{ end }} {{ end }}
-{{ end }}
+class {{ joinName $p.Name .Name }} {
+    {{- range .Fields }}
+	{{ if .Public }}+{{ else }}~{{ end }}{{ .Name }} {{ .Type -}}
+    {{- end }}
+    {{- range .Methods }}
+	{{ if .Public }}+{{ else }}~{{ end }}{{ .Name }}({{ methodArgs .Arguments }})
+	{{- if .Results }} {{ methodResults .Results }}{{ end }}
+    {{- end }}
+}
+  {{- end }}
+
+  {{- range .Interfaces }}
+
+interface {{ joinName $p.Name .Name }} {
+    {{- range .Methods }}
+	{{ if .Public }}+{{ else }}~{{ end }}{{ .Name }}({{ methodArgs .Arguments }})
+	{{- if .Results }} {{ methodResults .Results }}{{ end }}
+    {{- end }}
+}
+  {{- end }}
+
+  {{- range $cl := .Classes }}
+    {{- range .Relations }}
+"{{ joinName $p.Name $cl.Name }}" {{ relType .RelType (isLolipop $lolipop .Target) }}
+{{- if .Multiplicity }} "{{- .Multiplicity }}" {{ end }} "{{ qualifiedName .Target }}"
+{{- if .Label }}: {{ .Label }}{{ end -}}
+    {{- end }}
+  {{- end }}
+  {{- range $iface := .Interfaces }}
+    {{- range .Relations }}
+"{{ joinName $p.Name $iface.Name }}" {{ relType .RelType false }} "{{ qualifiedName .Target -}}"
+    {{- end }}
+  {{- end }}
+{{- end }}
 
 hide interface fields
 
@@ -67,18 +78,18 @@ func FprintPlantUML(w io.Writer, scope *ast.Scope, lolipopPackages []string) {
 func pumlRelType(relType ast.RelationType, lolipop bool) string {
 	switch relType {
 	case ast.Association:
-		return "-->"
+		return "->"
 	case ast.Extension:
-		return "--|>"
+		return "-|>"
 	case ast.Composition:
-		return "*--"
+		return "*-"
 	case ast.Agregation:
-		return "o--"
+		return "o-"
 	case ast.Implementation:
 		if lolipop {
 			return "-()"
 		}
-		return "..|>"
+		return ".|>"
 	}
 	panic(relType)
 }

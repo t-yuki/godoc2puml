@@ -1,3 +1,5 @@
+// Copyright (C) 2015, 2016 Yukinari Toyota. All rights reserved.
+
 package main
 
 import (

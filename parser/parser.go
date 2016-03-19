@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 

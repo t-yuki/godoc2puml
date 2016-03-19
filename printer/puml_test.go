@@ -19,17 +19,25 @@ func TestFprintPlantUML(t *testing.T) {
 	printer.FprintPlantUML(buf, scope, []string{})
 }
 
-func TestFprintPlantUMLStdLibs(t *testing.T) {
-	for _, name := range []string{"io", "net", "net/http"} {
-		scope := ast.NewScope()
-		pkg, err := parser.ParsePackage(name)
-		if err != nil {
-			t.Fatal(err)
-		}
-		scope.Packages[pkg.Name] = pkg
-		buf := &bytes.Buffer{}
-		printer.FprintPlantUML(buf, scope, []string{})
-		t.Log(buf)
-	}
+func TestFprintPlantUMLStdIO(t *testing.T) {
+	testFprintPlantUML(t, "io")
+}
+func TestFprintPlantUMLStdNet(t *testing.T) {
+	testFprintPlantUML(t, "net")
+}
 
+func TestFprintPlantUMLStdNet(t *testing.T) {
+	testFprintPlantUML(t, "net/http")
+}
+
+func testFprintPlantUML(t *testing.T, name string) {
+	scope := ast.NewScope()
+	pkg, err := parser.ParsePackage(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope.Packages[pkg.Name] = pkg
+	buf := &bytes.Buffer{}
+	printer.FprintPlantUML(buf, scope, []string{})
+	t.Log(buf)
 }

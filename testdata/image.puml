@@ -3,556 +3,284 @@
 
 set namespaceSeparator /
 
-
-
-
-
-	class image/Uniform {
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Convert(color.Color) color.Color
-
-		+Opaque() bool
-
-		+RGBA() (r uint32, g uint32, b uint32, a uint32)
-
-	}
-
-	class image/Point {
-
-		+X int
-
-		+Y int
-
-
-		+Add(q Point) Point
-
-		+Div(k int) Point
-
-		+Eq(q Point) bool
-
-		+In(r Rectangle) bool
-
-		+Mod(r Rectangle) Point
-
-		+Mul(k int) Point
-
-		+String() string
-
-		+Sub(q Point) Point
-
-	}
-
-	class image/Rectangle {
-
-
-		+Add(p Point) Rectangle
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+Canon() Rectangle
-
-		+ColorModel() color.Model
-
-		+Dx() int
-
-		+Dy() int
-
-		+Empty() bool
-
-		+Eq(s Rectangle) bool
-
-		+In(s Rectangle) bool
-
-		+Inset(n int) Rectangle
-
-		+Intersect(s Rectangle) Rectangle
-
-		+Overlaps(s Rectangle) bool
-
-		+Size() Point
-
-		+String() string
-
-		+Sub(p Point) Rectangle
-
-		+Union(s Rectangle) Rectangle
-
-	}
-
-	class image/YCbCr {
-
-		+CStride int
-
-		+Cb []uint8
-
-		+Cr []uint8
-
-		+Y []uint8
-
-		+YStride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+COffset(x int, y int) int
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+SubImage(r Rectangle) Image
-
-		+YCbCrAt(x int, y int) color.YCbCr
-
-		+YOffset(x int, y int) int
-
-	}
-
-	class image/NYCbCrA {
-
-		+A []uint8
-
-		+AStride int
-
-
-		+AOffset(x int, y int) int
-
-		+At(x int, y int) color.Color
-
-		+ColorModel() color.Model
-
-		+NYCbCrAAt(x int, y int) color.NYCbCrA
-
-		+Opaque() bool
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/format {
-
-		~decode func(io.Reader) (Image, error)
-
-		~decodeConfig func(io.Reader) (Config, error)
-
-		~magic string
-
-		~name string
-
-
-	}
-
-	class image/Config {
-
-		+Height int
-
-		+Width int
-
-
-	}
-
-	class image/RGBA {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+RGBAAt(x int, y int) color.RGBA
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetRGBA(x int, y int, c color.RGBA) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/RGBA64 {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+RGBA64At(x int, y int) color.RGBA64
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetRGBA64(x int, y int, c color.RGBA64) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/NRGBA {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+NRGBAAt(x int, y int) color.NRGBA
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetNRGBA(x int, y int, c color.NRGBA) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/NRGBA64 {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+NRGBA64At(x int, y int) color.NRGBA64
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetNRGBA64(x int, y int, c color.NRGBA64) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/Alpha {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+AlphaAt(x int, y int) color.Alpha
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetAlpha(x int, y int, c color.Alpha) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/Alpha16 {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+Alpha16At(x int, y int) color.Alpha16
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetAlpha16(x int, y int, c color.Alpha16) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/Gray {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+GrayAt(x int, y int) color.Gray
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetGray(x int, y int, c color.Gray) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/Gray16 {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-		+Gray16At(x int, y int) color.Gray16
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetGray16(x int, y int, c color.Gray16) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/CMYK {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+CMYKAt(x int, y int) color.CMYK
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetCMYK(x int, y int, c color.CMYK) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-	class image/Paletted {
-
-		+Pix []uint8
-
-		+Stride int
-
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorIndexAt(x int, y int) uint8
-
-		+ColorModel() color.Model
-
-		+Opaque() bool
-
-		+PixOffset(x int, y int) int
-
-		+Set(x int, y int, c color.Color) 
-
-		+SetColorIndex(x int, y int, index uint8) 
-
-		+SubImage(r Rectangle) Image
-
-	}
-
-
-	interface image/reader {
-
-		+Peek(int) ([]byte, error)
-
-	}
-
-	interface image/Image {
-
-		+At(x int, y int) color.Color
-
-		+Bounds() Rectangle
-
-		+ColorModel() color.Model
-
-	}
-
-	interface image/PalettedImage {
-
-		+ColorIndexAt(x int, y int) uint8
-
-	}
-
-
- 
-	"image/Uniform" --> "image/color/Color" : C
-
-	"image/Uniform" ..|> "image/Image" 
-
-	"image/Uniform" ..|> "image/color/Color" 
-
-	"image/Uniform" ..|> "image/color/Model" 
-    
-	"image/Rectangle" --> "image/Point" : Min
-
-	"image/Rectangle" --> "image/Point" : Max
-
-	"image/Rectangle" ..|> "image/Image" 
-  
-	"image/YCbCr" --> "image/YCbCrSubsampleRatio" : SubsampleRatio
-
-	"image/YCbCr" --> "image/Rectangle" : Rect
-
-	"image/YCbCr" ..|> "image/Image" 
-  
-	"image/NYCbCrA" *-- "image/YCbCr" 
-    
-	"image/Config" --> "image/color/Model" : ColorModel
-  
-	"image/RGBA" --> "image/Rectangle" : Rect
-
-	"image/RGBA" ..|> "image/Image" 
-  
-	"image/RGBA64" --> "image/Rectangle" : Rect
-
-	"image/RGBA64" ..|> "image/Image" 
-  
-	"image/NRGBA" --> "image/Rectangle" : Rect
-
-	"image/NRGBA" ..|> "image/Image" 
-  
-	"image/NRGBA64" --> "image/Rectangle" : Rect
-
-	"image/NRGBA64" ..|> "image/Image" 
-  
-	"image/Alpha" --> "image/Rectangle" : Rect
-
-	"image/Alpha" ..|> "image/Image" 
-  
-	"image/Alpha16" --> "image/Rectangle" : Rect
-
-	"image/Alpha16" ..|> "image/Image" 
-  
-	"image/Gray" --> "image/Rectangle" : Rect
-
-	"image/Gray" ..|> "image/Image" 
-  
-	"image/Gray16" --> "image/Rectangle" : Rect
-
-	"image/Gray16" ..|> "image/Image" 
-  
-	"image/CMYK" --> "image/Rectangle" : Rect
-
-	"image/CMYK" ..|> "image/Image" 
-  
-	"image/Paletted" --> "image/Rectangle" : Rect
-
-	"image/Paletted" --> "image/color/Palette" : Palette
-
-	"image/Paletted" ..|> "image/PalettedImage" 
- 
- 
-	"image/reader" --|> "io/Reader"
-    
-	"image/PalettedImage" --|> "image/Image"
- 
-
-
-
-	interface image/color/Color {
-
-	}
-
-	interface image/color/Model {
-
-	}
-
-
-
-    
-
-
-
-	interface io/Reader {
-
-	}
-
-
-
-  
-
+class image/Config {
+	+Height int
+	+Width int
+}
+
+class image/RGBA {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+RGBAAt(x int, y int) color.RGBA
+	+Set(x int, y int, c color.Color)
+	+SetRGBA(x int, y int, c color.RGBA)
+	+SubImage(r Rectangle) Image
+}
+
+class image/RGBA64 {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+RGBA64At(x int, y int) color.RGBA64
+	+Set(x int, y int, c color.Color)
+	+SetRGBA64(x int, y int, c color.RGBA64)
+	+SubImage(r Rectangle) Image
+}
+
+class image/NRGBA {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+NRGBAAt(x int, y int) color.NRGBA
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetNRGBA(x int, y int, c color.NRGBA)
+	+SubImage(r Rectangle) Image
+}
+
+class image/NRGBA64 {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+NRGBA64At(x int, y int) color.NRGBA64
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetNRGBA64(x int, y int, c color.NRGBA64)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Alpha {
+	+Pix []uint8
+	+Stride int
+	+AlphaAt(x int, y int) color.Alpha
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetAlpha(x int, y int, c color.Alpha)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Alpha16 {
+	+Pix []uint8
+	+Stride int
+	+Alpha16At(x int, y int) color.Alpha16
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetAlpha16(x int, y int, c color.Alpha16)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Gray {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+GrayAt(x int, y int) color.Gray
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetGray(x int, y int, c color.Gray)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Gray16 {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Gray16At(x int, y int) color.Gray16
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetGray16(x int, y int, c color.Gray16)
+	+SubImage(r Rectangle) Image
+}
+
+class image/CMYK {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+CMYKAt(x int, y int) color.CMYK
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetCMYK(x int, y int, c color.CMYK)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Paletted {
+	+Pix []uint8
+	+Stride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorIndexAt(x int, y int) uint8
+	+ColorModel() color.Model
+	+Opaque() bool
+	+PixOffset(x int, y int) int
+	+Set(x int, y int, c color.Color)
+	+SetColorIndex(x int, y int, index uint8)
+	+SubImage(r Rectangle) Image
+}
+
+class image/Uniform {
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+	+Convert(color.Color) color.Color
+	+Opaque() bool
+	+RGBA() (r uint32, g uint32, b uint32, a uint32)
+}
+
+class image/Point {
+	+X int
+	+Y int
+	+Add(q Point) Point
+	+Div(k int) Point
+	+Eq(q Point) bool
+	+In(r Rectangle) bool
+	+Mod(r Rectangle) Point
+	+Mul(k int) Point
+	+String() string
+	+Sub(q Point) Point
+}
+
+class image/Rectangle {
+	+Add(p Point) Rectangle
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+Canon() Rectangle
+	+ColorModel() color.Model
+	+Dx() int
+	+Dy() int
+	+Empty() bool
+	+Eq(s Rectangle) bool
+	+In(s Rectangle) bool
+	+Inset(n int) Rectangle
+	+Intersect(s Rectangle) Rectangle
+	+Overlaps(s Rectangle) bool
+	+Size() Point
+	+String() string
+	+Sub(p Point) Rectangle
+	+Union(s Rectangle) Rectangle
+}
+
+class image/YCbCr {
+	+CStride int
+	+Cb []uint8
+	+Cr []uint8
+	+Y []uint8
+	+YStride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+COffset(x int, y int) int
+	+ColorModel() color.Model
+	+Opaque() bool
+	+SubImage(r Rectangle) Image
+	+YCbCrAt(x int, y int) color.YCbCr
+	+YOffset(x int, y int) int
+}
+
+class image/NYCbCrA {
+	+A []uint8
+	+AStride int
+	+AOffset(x int, y int) int
+	+At(x int, y int) color.Color
+	+ColorModel() color.Model
+	+NYCbCrAAt(x int, y int) color.NYCbCrA
+	+Opaque() bool
+	+SubImage(r Rectangle) Image
+}
+
+class image/format {
+	~decode func(io.Reader) (Image, error)
+	~decodeConfig func(io.Reader) (Config, error)
+	~magic string
+	~name string
+}
+
+interface image/Image {
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+ColorModel() color.Model
+}
+
+interface image/PalettedImage {
+	+ColorIndexAt(x int, y int) uint8
+}
+
+interface image/reader {
+	+Peek(int) ([]byte, error)
+}
+"image/Config" -> "image/color/Model": ColorModel
+"image/RGBA" -> "image/Rectangle": Rect
+"image/RGBA" .|> "image/Image"
+"image/RGBA64" -> "image/Rectangle": Rect
+"image/RGBA64" .|> "image/Image"
+"image/NRGBA" -> "image/Rectangle": Rect
+"image/NRGBA" .|> "image/Image"
+"image/NRGBA64" -> "image/Rectangle": Rect
+"image/NRGBA64" .|> "image/Image"
+"image/Alpha" -> "image/Rectangle": Rect
+"image/Alpha" .|> "image/Image"
+"image/Alpha16" -> "image/Rectangle": Rect
+"image/Alpha16" .|> "image/Image"
+"image/Gray" -> "image/Rectangle": Rect
+"image/Gray" .|> "image/Image"
+"image/Gray16" -> "image/Rectangle": Rect
+"image/Gray16" .|> "image/Image"
+"image/CMYK" -> "image/Rectangle": Rect
+"image/CMYK" .|> "image/Image"
+"image/Paletted" -> "image/Rectangle": Rect
+"image/Paletted" -> "image/color/Palette": Palette
+"image/Paletted" .|> "image/PalettedImage"
+"image/Uniform" -> "image/color/Color": C
+"image/Uniform" .|> "image/Image"
+"image/Uniform" .|> "image/color/Color"
+"image/Uniform" .|> "image/color/Model"
+"image/Rectangle" -> "image/Point": Min
+"image/Rectangle" -> "image/Point": Max
+"image/Rectangle" .|> "image/Image"
+"image/YCbCr" -> "image/YCbCrSubsampleRatio": SubsampleRatio
+"image/YCbCr" -> "image/Rectangle": Rect
+"image/YCbCr" .|> "image/Image"
+"image/NYCbCrA" *- "image/YCbCr"
+"image/PalettedImage" -|> "image/Image"
+"image/reader" -|> "io/Reader"
+
+interface image/color/Color {
+}
+
+interface image/color/Model {
+}
+
+interface io/Reader {
+}
 
 hide interface fields
 

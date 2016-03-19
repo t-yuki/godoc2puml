@@ -29,4 +29,7 @@ godoc2puml: FORCE
 %.png: %.puml
 	java -Xmx1g -jar plantuml.jar -pipe -tpng < $(subst /,.,$*).puml > $(subst /,.,$*).png
 
+testdata: godoc2puml FORCE
+	./godoc2puml image > testdata/image.puml
+
 FORCE:
