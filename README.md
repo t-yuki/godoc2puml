@@ -41,7 +41,7 @@ Examples
 --------
 The below is output example of "image" package. For more examples, see #1
 
-[image](https://cloud.githubusercontent.com/assets/3804806/3258061/1a0a6f32-f235-11e3-8648-89b9e9abd326.png)
+![image](https://cloud.githubusercontent.com/assets/3804806/3258061/1a0a6f32-f235-11e3-8648-89b9e9abd326.png)
 
 Known Problems
 --------------
