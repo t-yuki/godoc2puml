@@ -26,7 +26,7 @@ func TestFprintPlantUMLStdNet(t *testing.T) {
 	testFprintPlantUML(t, "net")
 }
 
-func TestFprintPlantUMLStdNet(t *testing.T) {
+func TestFprintPlantUMLStdNetHTTP(t *testing.T) {
 	testFprintPlantUML(t, "net/http")
 }
 

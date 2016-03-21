@@ -20,13 +20,13 @@ import (
 )
 
 type Config struct {
-	Help     bool
-	Scope    string
-	Lolipop  string
-	Field    string
-	Format   string
-	Filter   string
-	HTTPAddr string
+	Help       bool
+	Scope      string
+	Lolipop    string
+	Field      string
+	Format     string
+	Ignore     string
+	DontIgnore string
 }
 
 var config Config
@@ -38,6 +38,8 @@ func init() {
 	flag.StringVar(&config.Field, "field", "", `set package names in comma-separated strings that use field relationship instead of association`)
 	flag.StringVar(&config.Format, "t", "text", `output format
         puml:  write PlantUML format`)
+	flag.StringVar(&config.Ignore, "ignore", "(fmt\\.Stringer|\\w+\\.[a-z][\\w]*)$", `name filter to ignore. default value removes fmt.String and private declarations except specified packages`)
+	flag.StringVar(&config.DontIgnore, "dont-ignore", "", `white-list for ignore. default/empty value means packages of arg`)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
@@ -54,6 +56,11 @@ func main() {
 	packages := flag.Args()
 	if len(packages) == 0 {
 		panic("godoc2uml without explicit package path is not implemented yet")
+	}
+
+	if config.DontIgnore == "" {
+		v := strings.Replace(strings.Join(packages, "|"), ".", "\\.", -1)
+		config.DontIgnore = "^(" + v + ")\\.(\\w+)$"
 	}
 
 	scope := ast.NewScope()
@@ -87,6 +94,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "annotate error:%#v\n", err)
 		return
 	}
+
+	err = annotator.Filter(scope, config.Ignore, config.DontIgnore)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "filter error:%#v\n", err)
+		return
+	}
+
 	printer.FprintPlantUML(os.Stdout, scope, strings.Split(config.Lolipop, ","))
 }
 

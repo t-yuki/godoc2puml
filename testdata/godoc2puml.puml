@@ -1,0 +1,80 @@
+
+@startuml
+
+set namespaceSeparator /
+
+class github.com/t-yuki/godoc2puml/Config {
+	+DontIgnore string
+	+Field string
+	+Format string
+	+Help bool
+	+Ignore string
+	+Lolipop string
+	+Scope string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Class {
+	+Name string
+}
+
+class github.com/t-yuki/godoc2puml/ast/DeclPair {
+	+Name string
+	+Type string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Field {
+	+Multiplicity string
+	+Name string
+	+Public bool
+	+Type string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Interface {
+	+Name string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Method {
+	+Name string
+	+Public bool
+}
+
+class github.com/t-yuki/godoc2puml/ast/Package {
+	+Name string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Relation {
+	+Label string
+	+Multiplicity string
+	+Target string
+}
+
+class github.com/t-yuki/godoc2puml/ast/Scope {
+	+Packages map[string]*Package
+}
+"github.com/t-yuki/godoc2puml/ast/Class" -> "*"  "github.com/t-yuki/godoc2puml/ast/Field": Fields
+"github.com/t-yuki/godoc2puml/ast/Class" -> "*"  "github.com/t-yuki/godoc2puml/ast/Method": Methods
+"github.com/t-yuki/godoc2puml/ast/Class" -> "*"  "github.com/t-yuki/godoc2puml/ast/Relation": Relations
+"github.com/t-yuki/godoc2puml/ast/Class" -> "github.com/t-yuki/godoc2puml/ast/SourcePos": Pos
+"github.com/t-yuki/godoc2puml/ast/Interface" -> "*"  "github.com/t-yuki/godoc2puml/ast/Method": Methods
+"github.com/t-yuki/godoc2puml/ast/Interface" -> "*"  "github.com/t-yuki/godoc2puml/ast/Relation": Relations
+"github.com/t-yuki/godoc2puml/ast/Method" -> "*"  "github.com/t-yuki/godoc2puml/ast/DeclPair": Arguments
+"github.com/t-yuki/godoc2puml/ast/Method" -> "*"  "github.com/t-yuki/godoc2puml/ast/DeclPair": Results
+"github.com/t-yuki/godoc2puml/ast/Package" -> "*"  "github.com/t-yuki/godoc2puml/ast/Class": Classes
+"github.com/t-yuki/godoc2puml/ast/Package" -> "*"  "github.com/t-yuki/godoc2puml/ast/Interface": Interfaces
+"github.com/t-yuki/godoc2puml/ast/Relation" -> "github.com/t-yuki/godoc2puml/ast/RelationType": RelType
+
+class go/ast/File {
+}
+
+class go/ast/Package {
+}
+
+interface go/ast/Visitor {
+}
+
+class go/token/FileSet {
+}
+
+hide interface fields
+
+@enduml

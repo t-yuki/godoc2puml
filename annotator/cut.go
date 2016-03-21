@@ -2,6 +2,7 @@ package annotator
 
 import "github.com/t-yuki/godoc2puml/ast"
 
+// Cut removes (probably) unnecessary relations preserving longest path.
 func Cut(scope *ast.Scope) error {
 	backproj := buildBackProjections(scope)
 	for _, pkg := range scope.Packages {
@@ -16,6 +17,18 @@ func Cut(scope *ast.Scope) error {
 			}
 			class.Relations = newrels
 		}
+		for _, iface := range pkg.Interfaces {
+			newrels := make([]*ast.Relation, 0, len(iface.Relations))
+			for _, rel := range iface.Relations {
+				if rel.RelType == ast.Extension &&
+					!isLongestPath(backproj, iface.Relations, rel) {
+					continue
+				}
+				newrels = append(newrels, rel)
+			}
+			iface.Relations = newrels
+		}
+
 	}
 	return nil
 }

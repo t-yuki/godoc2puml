@@ -239,27 +239,37 @@ interface image/reader {
 }
 "image/Alpha" .|> "image/Image"
 "image/Alpha" -> "image/Rectangle": Rect
+"image/Alpha" .|> "image/draw/Image"
 "image/Alpha16" .|> "image/Image"
 "image/Alpha16" -> "image/Rectangle": Rect
+"image/Alpha16" .|> "image/draw/Image"
 "image/CMYK" .|> "image/Image"
 "image/CMYK" -> "image/Rectangle": Rect
+"image/CMYK" .|> "image/draw/Image"
 "image/Config" -> "image/color/Model": ColorModel
 "image/Gray" .|> "image/Image"
 "image/Gray" -> "image/Rectangle": Rect
+"image/Gray" .|> "image/draw/Image"
 "image/Gray16" .|> "image/Image"
 "image/Gray16" -> "image/Rectangle": Rect
+"image/Gray16" .|> "image/draw/Image"
 "image/NRGBA" .|> "image/Image"
 "image/NRGBA" -> "image/Rectangle": Rect
+"image/NRGBA" .|> "image/draw/Image"
 "image/NRGBA64" .|> "image/Image"
 "image/NRGBA64" -> "image/Rectangle": Rect
+"image/NRGBA64" .|> "image/draw/Image"
 "image/NYCbCrA" *- "image/YCbCr"
 "image/Paletted" .|> "image/PalettedImage"
 "image/Paletted" -> "image/Rectangle": Rect
 "image/Paletted" -> "image/color/Palette": Palette
+"image/Paletted" .|> "image/draw/Image"
 "image/RGBA" .|> "image/Image"
 "image/RGBA" -> "image/Rectangle": Rect
+"image/RGBA" .|> "image/draw/Image"
 "image/RGBA64" .|> "image/Image"
 "image/RGBA64" -> "image/Rectangle": Rect
+"image/RGBA64" .|> "image/draw/Image"
 "image/Rectangle" .|> "image/Image"
 "image/Rectangle" -> "image/Point": Min
 "image/Rectangle" -> "image/Point": Max
@@ -277,6 +287,9 @@ interface image/color/Color {
 }
 
 interface image/color/Model {
+}
+
+interface image/draw/Image {
 }
 
 interface io/Reader {

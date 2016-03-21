@@ -3,6 +3,7 @@ package annotator
 import (
 	"fmt"
 	"go/build"
+	"strings"
 
 	"github.com/t-yuki/godoc2puml/ast"
 	"golang.org/x/tools/go/loader"
@@ -18,20 +19,13 @@ func Oracle(pkg *ast.Package, scopes ...string) error {
 	settings.BuildTags = []string{} // TODO
 	conf := loader.Config{Build: &settings}
 
-	withTests := false
-	if len(scopes) == 0 {
-		withTests = true
-	}
-	for _, scope := range scopes {
-		if scope == "" {
-			withTests = true
-		} else {
+	if len(scopes) == 0 || scopes[0] == "" {
+		conf.ImportWithTests(pkg.Name)
+		scopes = []string{pkg.Name, pkg.Name + "_test"}
+	} else {
+		for _, scope := range scopes {
 			conf.Import(scope)
 		}
-	}
-	if withTests {
-		conf.ImportWithTests(pkg.Name)
-	} else {
 		conf.Import(pkg.Name)
 	}
 
@@ -53,9 +47,15 @@ func Oracle(pkg *ast.Package, scopes ...string) error {
 		}
 		impls := query.Serial().Implements
 		for _, target := range impls.AssignableFromPtr {
+			if strings.Contains(target.Pos, "_test.go:") { // ignore relations to _test
+				continue
+			}
 			addImplements(class, target)
 		}
 		for _, target := range impls.AssignableFrom {
+			if strings.Contains(target.Pos, "_test.go:") { // ignore relations to _test
+				continue
+			}
 			addImplements(class, target)
 		}
 	}

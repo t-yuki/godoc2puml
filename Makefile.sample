@@ -33,5 +33,6 @@ testdata: godoc2puml FORCE
 	./godoc2puml image > testdata/image.puml
 	./godoc2puml io > testdata/io.puml
 	./godoc2puml net > testdata/net.puml
+	./godoc2puml github.com/t-yuki/godoc2puml/... > testdata/godoc2puml.puml
 
 FORCE:
