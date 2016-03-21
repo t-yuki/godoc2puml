@@ -1,3 +1,4 @@
+// Package ast contains syntax tree for plantuml and internal use.
 package ast
 
 type Scope struct {

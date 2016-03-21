@@ -2,6 +2,7 @@ package annotator
 
 import (
 	"log"
+	"sort"
 
 	"github.com/t-yuki/godoc2puml/ast"
 	"github.com/t-yuki/godoc2puml/parser"
@@ -24,7 +25,16 @@ func Complete(scope *ast.Scope) error {
 	for _, pkg := range scope.Packages {
 		delete(packageRefs, pkg.Name)
 	}
-	for path, refs := range packageRefs {
+
+	paths := make([]string, 0, len(packageRefs))
+	for path := range packageRefs {
+		paths = append(paths, path)
+	}
+	sort.Sort(sort.StringSlice(paths))
+
+	for _, path := range paths {
+		refs := packageRefs[path]
+
 		if path == "" {
 			pkg := ast.NewPackage("")
 			pkg.Interfaces = append(pkg.Interfaces,
@@ -34,7 +44,7 @@ func Complete(scope *ast.Scope) error {
 		}
 		pkg, err := parser.ParsePackage(path)
 		if err != nil {
-			log.Printf("%#v", err)
+			log.Printf("Complete ParsePackage err: %#v", err)
 			continue
 		}
 

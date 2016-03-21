@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
 	. "github.com/t-yuki/godoc2puml/ast"
 )
 
@@ -194,7 +195,7 @@ func (v *typeVisitor) elementType(expr ast.Node) string {
 
 			buildPkg, err := build.Import(importPath, ".", build.FindOnly)
 			if err != nil {
-				log.Printf("%#v", err)
+				log.Printf("elementType Import err: %#v", err)
 				continue
 			}
 			dir := buildPkg.Dir
@@ -204,7 +205,7 @@ func (v *typeVisitor) elementType(expr ast.Node) string {
 				return !fi.IsDir() && !strings.HasSuffix(fi.Name(), "_test.go")
 			}, 0)
 			if err != nil {
-				log.Printf("%#v", err)
+				log.Printf("elementType ParseDir err: %#v", err)
 				continue
 			}
 			for _, pkg := range pkgs {
@@ -218,7 +219,7 @@ func (v *typeVisitor) elementType(expr ast.Node) string {
 			}
 			return importPath + "." + name
 		}
-		log.Printf("can't resolve name", name)
+		log.Printf("elementType can't resolve name: %s", name)
 		return name
 	case *ast.ArrayType:
 		return v.elementType(expr.Elt)

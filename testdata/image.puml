@@ -3,6 +3,73 @@
 
 set namespaceSeparator /
 
+class image/Point {
+	+X int
+	+Y int
+	+Add(q Point) Point
+	+Div(k int) Point
+	+Eq(q Point) bool
+	+In(r Rectangle) bool
+	+Mod(r Rectangle) Point
+	+Mul(k int) Point
+	+String() string
+	+Sub(q Point) Point
+}
+
+class image/Rectangle {
+	+Add(p Point) Rectangle
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+Canon() Rectangle
+	+ColorModel() color.Model
+	+Dx() int
+	+Dy() int
+	+Empty() bool
+	+Eq(s Rectangle) bool
+	+In(s Rectangle) bool
+	+Inset(n int) Rectangle
+	+Intersect(s Rectangle) Rectangle
+	+Overlaps(s Rectangle) bool
+	+Size() Point
+	+String() string
+	+Sub(p Point) Rectangle
+	+Union(s Rectangle) Rectangle
+}
+
+class image/YCbCr {
+	+CStride int
+	+Cb []uint8
+	+Cr []uint8
+	+Y []uint8
+	+YStride int
+	+At(x int, y int) color.Color
+	+Bounds() Rectangle
+	+COffset(x int, y int) int
+	+ColorModel() color.Model
+	+Opaque() bool
+	+SubImage(r Rectangle) Image
+	+YCbCrAt(x int, y int) color.YCbCr
+	+YOffset(x int, y int) int
+}
+
+class image/NYCbCrA {
+	+A []uint8
+	+AStride int
+	+AOffset(x int, y int) int
+	+At(x int, y int) color.Color
+	+ColorModel() color.Model
+	+NYCbCrAAt(x int, y int) color.NYCbCrA
+	+Opaque() bool
+	+SubImage(r Rectangle) Image
+}
+
+class image/format {
+	~decode func(io.Reader) (Image, error)
+	~decodeConfig func(io.Reader) (Config, error)
+	~magic string
+	~name string
+}
+
 class image/Config {
 	+Height int
 	+Width int
@@ -157,71 +224,8 @@ class image/Uniform {
 	+RGBA() (r uint32, g uint32, b uint32, a uint32)
 }
 
-class image/Point {
-	+X int
-	+Y int
-	+Add(q Point) Point
-	+Div(k int) Point
-	+Eq(q Point) bool
-	+In(r Rectangle) bool
-	+Mod(r Rectangle) Point
-	+Mul(k int) Point
-	+String() string
-	+Sub(q Point) Point
-}
-
-class image/Rectangle {
-	+Add(p Point) Rectangle
-	+At(x int, y int) color.Color
-	+Bounds() Rectangle
-	+Canon() Rectangle
-	+ColorModel() color.Model
-	+Dx() int
-	+Dy() int
-	+Empty() bool
-	+Eq(s Rectangle) bool
-	+In(s Rectangle) bool
-	+Inset(n int) Rectangle
-	+Intersect(s Rectangle) Rectangle
-	+Overlaps(s Rectangle) bool
-	+Size() Point
-	+String() string
-	+Sub(p Point) Rectangle
-	+Union(s Rectangle) Rectangle
-}
-
-class image/YCbCr {
-	+CStride int
-	+Cb []uint8
-	+Cr []uint8
-	+Y []uint8
-	+YStride int
-	+At(x int, y int) color.Color
-	+Bounds() Rectangle
-	+COffset(x int, y int) int
-	+ColorModel() color.Model
-	+Opaque() bool
-	+SubImage(r Rectangle) Image
-	+YCbCrAt(x int, y int) color.YCbCr
-	+YOffset(x int, y int) int
-}
-
-class image/NYCbCrA {
-	+A []uint8
-	+AStride int
-	+AOffset(x int, y int) int
-	+At(x int, y int) color.Color
-	+ColorModel() color.Model
-	+NYCbCrAAt(x int, y int) color.NYCbCrA
-	+Opaque() bool
-	+SubImage(r Rectangle) Image
-}
-
-class image/format {
-	~decode func(io.Reader) (Image, error)
-	~decodeConfig func(io.Reader) (Config, error)
-	~magic string
-	~name string
+interface image/reader {
+	+Peek(int) ([]byte, error)
 }
 
 interface image/Image {
@@ -233,10 +237,13 @@ interface image/Image {
 interface image/PalettedImage {
 	+ColorIndexAt(x int, y int) uint8
 }
-
-interface image/reader {
-	+Peek(int) ([]byte, error)
-}
+"image/Rectangle" -> "image/Point": Min
+"image/Rectangle" -> "image/Point": Max
+"image/Rectangle" .|> "image/Image"
+"image/YCbCr" -> "image/YCbCrSubsampleRatio": SubsampleRatio
+"image/YCbCr" -> "image/Rectangle": Rect
+"image/YCbCr" .|> "image/Image"
+"image/NYCbCrA" *- "image/YCbCr"
 "image/Config" -> "image/color/Model": ColorModel
 "image/RGBA" -> "image/Rectangle": Rect
 "image/RGBA" .|> "image/Image"
@@ -263,15 +270,8 @@ interface image/reader {
 "image/Uniform" .|> "image/Image"
 "image/Uniform" .|> "image/color/Color"
 "image/Uniform" .|> "image/color/Model"
-"image/Rectangle" -> "image/Point": Min
-"image/Rectangle" -> "image/Point": Max
-"image/Rectangle" .|> "image/Image"
-"image/YCbCr" -> "image/YCbCrSubsampleRatio": SubsampleRatio
-"image/YCbCr" -> "image/Rectangle": Rect
-"image/YCbCr" .|> "image/Image"
-"image/NYCbCrA" *- "image/YCbCr"
-"image/PalettedImage" -|> "image/Image"
 "image/reader" -|> "io/Reader"
+"image/PalettedImage" -|> "image/Image"
 
 interface image/color/Color {
 }

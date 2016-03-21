@@ -8,8 +8,16 @@ import (
 	"github.com/t-yuki/godoc2puml/parser"
 )
 
-func TestParsePackage_IO(t *testing.T) {
-	pkg, err := parser.ParsePackage("io")
+func TestParsePackage_io(t *testing.T) {
+	testParsePackage(t, "io")
+}
+
+func TestParsePackage_image(t *testing.T) {
+	testParsePackage(t, "image")
+}
+
+func testParsePackage(t *testing.T, name string) {
+	pkg, err := parser.ParsePackage(name)
 	if err != nil {
 		t.Fatal(err)
 	}
