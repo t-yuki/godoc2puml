@@ -31,5 +31,7 @@ godoc2puml: FORCE
 
 testdata: godoc2puml FORCE
 	./godoc2puml image > testdata/image.puml
+	./godoc2puml io > testdata/io.puml
+	./godoc2puml net > testdata/net.puml
 
 FORCE:

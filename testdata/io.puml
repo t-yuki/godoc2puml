@@ -1,0 +1,186 @@
+
+@startuml
+
+set namespaceSeparator /
+
+class io/pipeResult {
+	~err error
+	~n int
+}
+
+class io/pipe {
+	~data []byte
+	~rerr error
+	~werr error
+	~rclose(err error)
+	~read(b []byte) (n int, err error)
+	~wclose(err error)
+	~write(b []byte) (n int, err error)
+}
+
+class io/PipeReader {
+	+Close() error
+	+CloseWithError(err error) error
+	+Read(data []byte) (n int, err error)
+}
+
+class io/PipeWriter {
+	+Close() error
+	+CloseWithError(err error) error
+	+Write(data []byte) (n int, err error)
+}
+
+class io/LimitedReader {
+	+N int64
+	+Read(p []byte) (n int, err error)
+}
+
+class io/SectionReader {
+	~base int64
+	~limit int64
+	~off int64
+	+Read(p []byte) (n int, err error)
+	+ReadAt(p []byte, off int64) (n int, err error)
+	+Seek(offset int64, whence int) (int64, error)
+	+Size() int64
+}
+
+class io/teeReader {
+	+Read(p []byte) (n int, err error)
+}
+
+class io/multiReader {
+	+Read(p []byte) (n int, err error)
+}
+
+class io/multiWriter {
+	+Write(p []byte) (n int, err error)
+	+WriteString(s string) (n int, err error)
+}
+
+interface io/Reader {
+	+Read(p []byte) (n int, err error)
+}
+
+interface io/Writer {
+	+Write(p []byte) (n int, err error)
+}
+
+interface io/Closer {
+	+Close() error
+}
+
+interface io/Seeker {
+	+Seek(offset int64, whence int) (int64, error)
+}
+
+interface io/ReadWriter {
+}
+
+interface io/ReadCloser {
+}
+
+interface io/WriteCloser {
+}
+
+interface io/ReadWriteCloser {
+}
+
+interface io/ReadSeeker {
+}
+
+interface io/WriteSeeker {
+}
+
+interface io/ReadWriteSeeker {
+}
+
+interface io/ReaderFrom {
+	+ReadFrom(r Reader) (n int64, err error)
+}
+
+interface io/WriterTo {
+	+WriteTo(w Writer) (n int64, err error)
+}
+
+interface io/ReaderAt {
+	+ReadAt(p []byte, off int64) (n int, err error)
+}
+
+interface io/WriterAt {
+	+WriteAt(p []byte, off int64) (n int, err error)
+}
+
+interface io/ByteReader {
+	+ReadByte() (c byte, err error)
+}
+
+interface io/ByteScanner {
+	+UnreadByte() error
+}
+
+interface io/ByteWriter {
+	+WriteByte(c byte) error
+}
+
+interface io/RuneReader {
+	+ReadRune() (r rune, size int, err error)
+}
+
+interface io/RuneScanner {
+	+UnreadRune() error
+}
+
+interface io/stringWriter {
+	+WriteString(s string) (n int, err error)
+}
+"io/pipe" -> "sync/Mutex": rl
+"io/pipe" -> "sync/Mutex": wl
+"io/pipe" -> "sync/Mutex": l
+"io/pipe" -> "sync/Cond": rwait
+"io/pipe" -> "sync/Cond": wwait
+"io/PipeReader" -> "io/pipe": p
+"io/PipeReader" .|> "io/ReadCloser"
+"io/PipeWriter" -> "io/pipe": p
+"io/PipeWriter" .|> "io/WriteCloser"
+"io/LimitedReader" -> "io/Reader": R
+"io/LimitedReader" .|> "io/Reader"
+"io/SectionReader" -> "io/ReaderAt": r
+"io/SectionReader" .|> "io/ReadSeeker"
+"io/SectionReader" .|> "io/ReaderAt"
+"io/teeReader" -> "io/Reader": r
+"io/teeReader" -> "io/Writer": w
+"io/teeReader" .|> "io/Reader"
+"io/multiReader" -> "*"  "io/Reader": readers
+"io/multiReader" .|> "io/Reader"
+"io/multiWriter" -> "*"  "io/Writer": writers
+"io/multiWriter" .|> "io/Writer"
+"io/multiWriter" .|> "io/stringWriter"
+"io/ReadWriter" -|> "io/Reader"
+"io/ReadWriter" -|> "io/Writer"
+"io/ReadCloser" -|> "io/Reader"
+"io/ReadCloser" -|> "io/Closer"
+"io/WriteCloser" -|> "io/Writer"
+"io/WriteCloser" -|> "io/Closer"
+"io/ReadWriteCloser" -|> "io/Reader"
+"io/ReadWriteCloser" -|> "io/Writer"
+"io/ReadWriteCloser" -|> "io/Closer"
+"io/ReadSeeker" -|> "io/Reader"
+"io/ReadSeeker" -|> "io/Seeker"
+"io/WriteSeeker" -|> "io/Writer"
+"io/WriteSeeker" -|> "io/Seeker"
+"io/ReadWriteSeeker" -|> "io/Reader"
+"io/ReadWriteSeeker" -|> "io/Writer"
+"io/ReadWriteSeeker" -|> "io/Seeker"
+"io/ByteScanner" -|> "io/ByteReader"
+"io/RuneScanner" -|> "io/RuneReader"
+
+class sync/Mutex {
+}
+
+class sync/Cond {
+}
+
+hide interface fields
+
+@enduml
