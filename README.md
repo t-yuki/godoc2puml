@@ -32,9 +32,20 @@ Other options:
 
 ```
 Usage of godoc2puml:
-  -t="puml": output format
-        puml:  write PlantUML format.
-  -h=false: show this help
+  -dont-ignore string
+        white-list for ignore. default/empty value means packages of arg
+  -field string
+        set package names in comma-separated strings that use field relationship instead of association
+  -h    show this help
+  -ignore string
+        name filter to ignore. default value removes fmt.String and private declarations except specified packages (default "(fmt\\.Stringer|\\w+\\.[a-z][\\w]*)$")
+  -lolipop string
+        set package names in comma-separated strings that use lolipop-style interface relationship instead of implementation
+  -scope string
+        set analysis scope (main) package. if it is omitted, scope is tests in the same directory
+  -t string
+        output format
+        puml:  write PlantUML format (default "text")
 ```
 
 Examples
