@@ -3,19 +3,9 @@
 
 set namespaceSeparator /
 
-class io/pipeResult {
-	~err error
-	~n int
-}
-
-class io/pipe {
-	~data []byte
-	~rerr error
-	~werr error
-	~rclose(err error)
-	~read(b []byte) (n int, err error)
-	~wclose(err error)
-	~write(b []byte) (n int, err error)
+class io/LimitedReader {
+	+N int64
+	+Read(p []byte) (n int, err error)
 }
 
 class io/PipeReader {
@@ -30,11 +20,6 @@ class io/PipeWriter {
 	+Write(data []byte) (n int, err error)
 }
 
-class io/LimitedReader {
-	+N int64
-	+Read(p []byte) (n int, err error)
-}
-
 class io/SectionReader {
 	~base int64
 	~limit int64
@@ -43,10 +28,6 @@ class io/SectionReader {
 	+ReadAt(p []byte, off int64) (n int, err error)
 	+Seek(offset int64, whence int) (int64, error)
 	+Size() int64
-}
-
-class io/teeReader {
-	+Read(p []byte) (n int, err error)
 }
 
 class io/multiReader {
@@ -58,57 +39,23 @@ class io/multiWriter {
 	+WriteString(s string) (n int, err error)
 }
 
-interface io/Reader {
+class io/pipe {
+	~data []byte
+	~rerr error
+	~werr error
+	~rclose(err error)
+	~read(b []byte) (n int, err error)
+	~wclose(err error)
+	~write(b []byte) (n int, err error)
+}
+
+class io/pipeResult {
+	~err error
+	~n int
+}
+
+class io/teeReader {
 	+Read(p []byte) (n int, err error)
-}
-
-interface io/Writer {
-	+Write(p []byte) (n int, err error)
-}
-
-interface io/Closer {
-	+Close() error
-}
-
-interface io/Seeker {
-	+Seek(offset int64, whence int) (int64, error)
-}
-
-interface io/ReadWriter {
-}
-
-interface io/ReadCloser {
-}
-
-interface io/WriteCloser {
-}
-
-interface io/ReadWriteCloser {
-}
-
-interface io/ReadSeeker {
-}
-
-interface io/WriteSeeker {
-}
-
-interface io/ReadWriteSeeker {
-}
-
-interface io/ReaderFrom {
-	+ReadFrom(r Reader) (n int64, err error)
-}
-
-interface io/WriterTo {
-	+WriteTo(w Writer) (n int64, err error)
-}
-
-interface io/ReaderAt {
-	+ReadAt(p []byte, off int64) (n int, err error)
-}
-
-interface io/WriterAt {
-	+WriteAt(p []byte, off int64) (n int, err error)
 }
 
 interface io/ByteReader {
@@ -123,6 +70,37 @@ interface io/ByteWriter {
 	+WriteByte(c byte) error
 }
 
+interface io/Closer {
+	+Close() error
+}
+
+interface io/ReadCloser {
+}
+
+interface io/ReadSeeker {
+}
+
+interface io/ReadWriteCloser {
+}
+
+interface io/ReadWriteSeeker {
+}
+
+interface io/ReadWriter {
+}
+
+interface io/Reader {
+	+Read(p []byte) (n int, err error)
+}
+
+interface io/ReaderAt {
+	+ReadAt(p []byte, off int64) (n int, err error)
+}
+
+interface io/ReaderFrom {
+	+ReadFrom(r Reader) (n int64, err error)
+}
+
 interface io/RuneReader {
 	+ReadRune() (r rune, size int, err error)
 }
@@ -131,54 +109,76 @@ interface io/RuneScanner {
 	+UnreadRune() error
 }
 
+interface io/Seeker {
+	+Seek(offset int64, whence int) (int64, error)
+}
+
+interface io/WriteCloser {
+}
+
+interface io/WriteSeeker {
+}
+
+interface io/Writer {
+	+Write(p []byte) (n int, err error)
+}
+
+interface io/WriterAt {
+	+WriteAt(p []byte, off int64) (n int, err error)
+}
+
+interface io/WriterTo {
+	+WriteTo(w Writer) (n int64, err error)
+}
+
 interface io/stringWriter {
 	+WriteString(s string) (n int, err error)
 }
-"io/pipe" -> "sync/Mutex": rl
-"io/pipe" -> "sync/Mutex": wl
-"io/pipe" -> "sync/Mutex": l
-"io/pipe" -> "sync/Cond": rwait
-"io/pipe" -> "sync/Cond": wwait
-"io/PipeReader" -> "io/pipe": p
-"io/PipeReader" .|> "io/ReadCloser"
-"io/PipeWriter" -> "io/pipe": p
-"io/PipeWriter" .|> "io/WriteCloser"
 "io/LimitedReader" -> "io/Reader": R
 "io/LimitedReader" .|> "io/Reader"
-"io/SectionReader" -> "io/ReaderAt": r
+"io/PipeReader" .|> "io/ReadCloser"
+"io/PipeReader" -> "io/pipe": p
+"io/PipeWriter" .|> "io/WriteCloser"
+"io/PipeWriter" -> "io/pipe": p
 "io/SectionReader" .|> "io/ReadSeeker"
+"io/SectionReader" -> "io/ReaderAt": r
 "io/SectionReader" .|> "io/ReaderAt"
-"io/teeReader" -> "io/Reader": r
-"io/teeReader" -> "io/Writer": w
-"io/teeReader" .|> "io/Reader"
 "io/multiReader" -> "*"  "io/Reader": readers
 "io/multiReader" .|> "io/Reader"
 "io/multiWriter" -> "*"  "io/Writer": writers
 "io/multiWriter" .|> "io/Writer"
 "io/multiWriter" .|> "io/stringWriter"
-"io/ReadWriter" -|> "io/Reader"
-"io/ReadWriter" -|> "io/Writer"
-"io/ReadCloser" -|> "io/Reader"
+"io/pipe" -> "sync/Cond": rwait
+"io/pipe" -> "sync/Cond": wwait
+"io/pipe" -> "sync/Mutex": rl
+"io/pipe" -> "sync/Mutex": wl
+"io/pipe" -> "sync/Mutex": l
+"io/teeReader" -> "io/Reader": r
+"io/teeReader" .|> "io/Reader"
+"io/teeReader" -> "io/Writer": w
+"io/ByteScanner" -|> "io/ByteReader"
 "io/ReadCloser" -|> "io/Closer"
-"io/WriteCloser" -|> "io/Writer"
-"io/WriteCloser" -|> "io/Closer"
-"io/ReadWriteCloser" -|> "io/Reader"
-"io/ReadWriteCloser" -|> "io/Writer"
-"io/ReadWriteCloser" -|> "io/Closer"
+"io/ReadCloser" -|> "io/Reader"
 "io/ReadSeeker" -|> "io/Reader"
 "io/ReadSeeker" -|> "io/Seeker"
-"io/WriteSeeker" -|> "io/Writer"
-"io/WriteSeeker" -|> "io/Seeker"
+"io/ReadWriteCloser" -|> "io/Closer"
+"io/ReadWriteCloser" -|> "io/Reader"
+"io/ReadWriteCloser" -|> "io/Writer"
 "io/ReadWriteSeeker" -|> "io/Reader"
-"io/ReadWriteSeeker" -|> "io/Writer"
 "io/ReadWriteSeeker" -|> "io/Seeker"
-"io/ByteScanner" -|> "io/ByteReader"
+"io/ReadWriteSeeker" -|> "io/Writer"
+"io/ReadWriter" -|> "io/Reader"
+"io/ReadWriter" -|> "io/Writer"
 "io/RuneScanner" -|> "io/RuneReader"
-
-class sync/Mutex {
-}
+"io/WriteCloser" -|> "io/Closer"
+"io/WriteCloser" -|> "io/Writer"
+"io/WriteSeeker" -|> "io/Seeker"
+"io/WriteSeeker" -|> "io/Writer"
 
 class sync/Cond {
+}
+
+class sync/Mutex {
 }
 
 hide interface fields

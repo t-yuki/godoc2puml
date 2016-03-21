@@ -16,7 +16,7 @@ set namespaceSeparator /
 
 {{- $lolipop := .Lolipop }}
 
-{{- range $p := .Scope.Packages -}}
+{{- range $p := .Packages -}}
   {{- range .Classes }}
 
 class {{ joinName $p.Name .Name }} {
@@ -69,7 +69,13 @@ var pumlFuncs = map[string]interface{}{
 }
 
 func FprintPlantUML(w io.Writer, scope *ast.Scope, lolipopPackages []string) {
-	err := pumlTemplate.Execute(w, map[string]interface{}{"Scope": scope, "Lolipop": lolipopPackages})
+	packages := make(ast.PackageSlice, 0, len(scope.Packages))
+	for _, p := range scope.Packages {
+		packages = append(packages, p)
+	}
+	packages.Sort()
+
+	err := pumlTemplate.Execute(w, map[string]interface{}{"Packages": packages, "Lolipop": lolipopPackages})
 	if err != nil {
 		panic(err)
 	}
