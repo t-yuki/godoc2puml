@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/t-yuki/godoc2puml/ast"
+	"github.com/t-yuki/godoc2puml/guru"
+	"golang.org/x/tools/cmd/guru/serial"
 	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/oracle"
-	"golang.org/x/tools/oracle/serial"
 )
 
-// Oracle annotates `pkg` using go.tools/oracle interface implements detector.
+// Oracle annotates `pkg` using go.tools/guru interface implements detector.
 // It uses `scopes` as analysis scope.
 // If `scopes` is none of one of `scopes` is zero string, it uses unit tests as scope.
 func Oracle(pkg *ast.Package, scopes ...string) error {
@@ -31,19 +31,19 @@ func Oracle(pkg *ast.Package, scopes ...string) error {
 
 	_, err := conf.Load()
 	if err != nil {
-		return fmt.Errorf("oracle annotator: conf load error: %+v", err)
+		return fmt.Errorf("guru annotator: conf load error: %+v", err)
 	}
 
 	for _, class := range pkg.Classes {
-		query := oracle.Query{
+		query := guru.Query{
 			Mode:  "implements",
 			Pos:   string(class.Pos),
 			Build: conf.Build,
 			Scope: scopes,
 		}
-		err = oracle.Run(&query)
+		err = guru.Run(&query)
 		if err != nil {
-			return fmt.Errorf("oracle annotator: query error: %+v, %v", err, class.Pos)
+			return fmt.Errorf("guru annotator: query error: %+v, %v", err, class.Pos)
 		}
 		impls := query.Serial().Implements
 		for _, target := range impls.AssignableFromPtr {
